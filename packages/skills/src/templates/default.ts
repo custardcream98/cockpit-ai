@@ -24,9 +24,9 @@ tools:
 # Per-adapter overrides (optional)
 adapters:
   claude-code:
-    type: command    # creates .claude/commands/${name}.md
+    type: skill    # creates .claude/skills/${name}/SKILL.md
   cursor:
-    type: rule       # creates .cursor/rules/${name}.mdc
+    type: rule     # creates .cursor/rules/${name}.mdc
     alwaysApply: false
 `;
 }
@@ -61,6 +61,6 @@ tools:
 
 adapters:
   claude-code:
-    type: command
+    type: skill
 `;
 }
