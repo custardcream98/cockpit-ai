@@ -1,0 +1,12 @@
+cockpit: "1.0"
+
+workspace:
+  name: cockpit-ai
+  default_adapter: claude-code
+
+adapters:
+  - claude-code
+
+context:
+  files:
+    - ".cockpit/context/*.md"

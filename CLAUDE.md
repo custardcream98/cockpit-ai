@@ -88,3 +88,35 @@ const config = tryLoadConfig(path, WorkspaceConfigSchema); // null if file missi
 ## All Phases Complete ✅
 
 Phases 1–6 all implemented. Remaining work: polish, publishing, more adapters.
+
+<!-- cockpit:managed -->
+
+## Global Rules
+
+- I prefer Korean for comments
+- 새 CLI 커맨드 추가: packages/cli/src/commands/<name>.ts 생성 후 index.ts에 등록.
+새 어댑터 추가: packages/adapters/src/<tool>/index.ts에 CockpitAdapter 구현.
+Zod 스키마는 ZodTypeAny + z.infer<S> 사용 — ZodSchema<T>는 transform()과 호환 안 됨.
+테스트는 os.tmpdir()로 실제 임시 디렉토리 사용, 파일 시스템 mock 지양.
+커밋 전 pnpm build && pnpm test 필수.
+- Node.js >= 20, TypeScript strict mode (noUncheckedIndexedAccess, noImplicitReturns 포함).
+ESM only — import/export 사용, require() 금지.
+pnpm 패키지 매니저, turborepo 모노레포.
+zod로 런타임 타입 검증, yaml 패키지(js-yaml 아님)로 YAML 파싱.
+tsup으로 빌드, vitest로 테스트.
+
+## Project Rules
+
+- cockpit-ai 모노레포. 패키지 구조:
+- @cockpit-ai/core — 타입, config 로더/리졸버/파인더 (다른 패키지들의 기반)
+- @cockpit-ai/adapters — AI 도구별 어댑터 (claude-code, cursor, opencode)
+- @cockpit-ai/skills — 스킬 로더/레지스트리
+- @cockpit-ai/context — 컨텍스트 관리 (파일 기반 포함)
+- @cockpit-ai/agents — 에이전트 스포너/트래커
+- @cockpit-ai/worktree — 워크트리 오케스트레이션
+- @cockpit-ai/cli — commander 기반 CLI (cockpit 바이너리)
+
+새 패키지 간 의존성은 turbo.json의 ^build 의존 순서를 따름.
+core는 외부 패키지에 의존하지 않는 최하위 레이어.
+
+config 계층: profile → workspace → project (deep merge, 나중이 이김).
