@@ -133,7 +133,7 @@ describe("applyCommand", () => {
     cwdSpy.mockRestore();
   });
 
-  it("shows skeleton message when config exists", async () => {
+  it("applies config when workspace exists", async () => {
     const cockpitDir = join(tmpDir, COCKPIT_DIR);
     mkdirSync(cockpitDir, { recursive: true });
     require("node:fs").writeFileSync(
@@ -143,13 +143,12 @@ describe("applyCommand", () => {
     );
 
     const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
     const { applyCommand } = await import("../commands/apply.js");
-    await applyCommand({});
-
-    const output = warnSpy.mock.calls.flat().join("\n");
-    expect(output.toLowerCase()).toContain("not yet implemented");
+    // Should resolve without throwing (adapter runs, no skills = "nothing to apply")
+    await expect(applyCommand({})).resolves.toBeUndefined();
 
     cwdSpy.mockRestore();
   });
