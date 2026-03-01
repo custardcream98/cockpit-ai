@@ -27,8 +27,11 @@
   },
   "dependencies": {
     "@cockpit/adapters": "workspace:*",
+    "@cockpit/agents": "workspace:*",
+    "@cockpit/context": "workspace:*",
     "@cockpit/core": "workspace:*",
     "@cockpit/skills": "workspace:*",
+    "@cockpit/worktree": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "ora": "^8.0.0",
