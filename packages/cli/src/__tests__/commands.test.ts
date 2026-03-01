@@ -121,15 +121,11 @@ describe("statusCommand", () => {
 
 describe("applyCommand", () => {
   it("exits with error when no config found", async () => {
-    const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => {
-      throw new Error("process.exit called");
-    });
-
     const cwdSpy = vi.spyOn(process, "cwd").mockReturnValue(tmpDir);
     const { applyCommand } = await import("../commands/apply.js");
 
-    await expect(applyCommand({})).rejects.toThrow("process.exit called");
-    exitSpy.mockRestore();
+    // process.exit 대신 Error throw로 변경 — 호출자(watch 등)에서 catch 가능
+    await expect(applyCommand({})).rejects.toThrow("No Cockpit configuration found.");
     cwdSpy.mockRestore();
   });
 

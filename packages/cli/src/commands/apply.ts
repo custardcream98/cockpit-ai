@@ -24,9 +24,8 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
   const paths = findConfigPaths(cwd);
 
   if (!paths.workspacePath && !paths.projectPath) {
-    ui.error("No Cockpit configuration found.");
-    ui.info("Run 'cockpit init' to initialize a workspace.");
-    process.exit(1);
+    // process.exit 대신 throw → watch 등 호출자에서 catch 가능
+    throw new Error("No Cockpit configuration found. Run 'cockpit init' to initialize a workspace.");
   }
 
   const config = resolveConfig(paths);
