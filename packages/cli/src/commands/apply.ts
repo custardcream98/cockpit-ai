@@ -9,7 +9,7 @@ import {
 import { getAdapters } from "@cockpit-ai/adapters";
 import { SkillRegistry } from "@cockpit-ai/skills";
 import { ContextManager } from "@cockpit-ai/context";
-import { getBuiltinSkills } from "../builtins/index.js";
+import { getBuiltinSkills, STANDING_INSTRUCTION } from "../builtins/index.js";
 import { ui } from "../ui/output.js";
 
 // ─── Apply Command ─────────────────────────────────────────────────────────
@@ -81,10 +81,17 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
   const skills = [...registry.list(), ...getBuiltinSkills()];
 
-  // ── Build context (inline rules + external .md files) ───────────────────
+  // ── Build context (inline rules + external .md files + standing instruction)
 
   const contextManager = new ContextManager(cwd);
-  const context = contextManager.getResolved();
+  const baseContext = contextManager.getResolved();
+  const context = {
+    ...baseContext,
+    global: [
+      ...baseContext.global,
+      { content: STANDING_INSTRUCTION, scope: "global" as const, source: "cockpit-builtin" },
+    ],
+  };
 
   // ── Apply to each adapter ────────────────────────────────────────────────
 

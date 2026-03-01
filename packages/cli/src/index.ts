@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { initCommand } from "./commands/init.js";
 import { statusCommand } from "./commands/status.js";
 import { applyCommand } from "./commands/apply.js";
+import { watchCommand } from "./commands/watch.js";
 import {
   skillListCommand,
   skillCreateCommand,
@@ -84,6 +85,20 @@ program
         adapter: opts.adapter as string | undefined,
         clean: opts.clean as boolean | undefined,
       });
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
+  });
+
+// ─── watch ─────────────────────────────────────────────────────────────────
+
+program
+  .command("watch")
+  .description("Watch .cockpit/ for changes and auto-apply")
+  .action(async () => {
+    try {
+      await watchCommand();
     } catch (err) {
       console.error("Error:", err instanceof Error ? err.message : err);
       process.exit(1);

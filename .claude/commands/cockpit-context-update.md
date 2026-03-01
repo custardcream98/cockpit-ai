@@ -15,14 +15,7 @@ Analyze the current project and update the Cockpit context files in `.cockpit/co
    - Create additional files as needed (e.g. `testing.md`, `api.md`)
    - Use frontmatter `scope: global` or `scope: project` as appropriate
 
-3. **Apply the updated context** by running:
-   ```
-   cockpit apply
-   ```
-
 ## File Format
-
-Each context file should use this format:
 
 ```markdown
 ---
@@ -33,10 +26,11 @@ Your context rules here. Be specific and actionable.
 
 ## Guidelines
 
-- Be specific and actionable — rules like "Use TypeScript strict mode" are better than "Use TypeScript"
-- Keep each file focused on one topic
-- Prefer `scope: global` for language/style rules that apply everywhere
+- Be specific and actionable — "Use TypeScript strict mode" is better than "Use TypeScript"
+- One file per topic; content within a file can be as long as needed
+- Prefer `scope: global` for language/style rules
 - Use `scope: project` for project-specific architecture or conventions
 - Remove outdated rules when the project evolves
+- `cockpit watch` auto-applies changes — no need to run `cockpit apply` manually
 
 <!-- cockpit:managed -->

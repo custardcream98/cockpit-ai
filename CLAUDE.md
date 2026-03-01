@@ -106,6 +106,12 @@ pnpm 패키지 매니저, turborepo 모노레포.
 zod로 런타임 타입 검증, yaml 패키지(js-yaml 아님)로 YAML 파싱.
 tsup으로 빌드, vitest로 테스트.
 
+Proactively maintain `.cockpit/context/` as you work:
+- Discover a coding pattern → update or create the relevant `.md` file
+- Understand the architecture better → update `architecture.md`
+- Notice an outdated rule → remove or correct it
+- `cockpit watch` auto-applies all changes — just write the files.
+
 
 ## Project Rules
 
