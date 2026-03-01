@@ -6,8 +6,9 @@ adapters:
   - cursor
   - opencode
 context:
+  # Inline rules (short, quick notes)
   global:
-    - "Use TypeScript strict mode"
-    - "Prefer functional patterns over classes"
-  project:
-    - "This is a playground for testing Cockpit adapters"
+    - "Node.js >= 20 required"
+  # External context files (richer, file-based context)
+  files:
+    - ".cockpit/context/*.md"
