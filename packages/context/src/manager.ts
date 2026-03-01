@@ -5,11 +5,10 @@ import {
   findConfigPaths,
   resolveConfig,
   buildResolvedContext,
-  COCKPIT_DIR,
-  CONFIG_FILE,
   type ContextRule,
   type ResolvedContext,
 } from "@cockpit-ai/core";
+import { discoverContextFiles, autoDiscoverContextFiles } from "./files.js";
 
 // ─── ContextManager ────────────────────────────────────────────────────────
 
@@ -17,14 +16,37 @@ export class ContextManager {
   constructor(private readonly cwd: string) {}
 
   /**
-   * Get the fully resolved context from all config layers.
+   * Get the fully resolved context from all config layers,
+   * including any external `.md` context files.
    */
   getResolved(): ResolvedContext {
     const paths = findConfigPaths(this.cwd);
     const config = resolveConfig(paths);
+
+    // Determine the base directory for resolving file patterns
+    const basePath = paths.workspacePath
+      ? resolve(join(paths.workspacePath, "..", ".."))
+      : paths.projectPath
+      ? resolve(join(paths.projectPath, "..", ".."))
+      : this.cwd;
+
+    // Load file-based context entries
+    const fileEntries =
+      config.context.files.length > 0
+        ? discoverContextFiles(basePath, config.context.files)
+        : autoDiscoverContextFiles(basePath);
+
+    // Separate file entries by scope and append to inline rules
+    const fileGlobal = fileEntries
+      .filter((e) => e.scope === "global")
+      .map((e) => e.content);
+    const fileProject = fileEntries
+      .filter((e) => e.scope === "project")
+      .map((e) => e.content);
+
     return buildResolvedContext(
-      config.context.global,
-      config.context.project,
+      [...config.context.global, ...fileGlobal],
+      [...config.context.project, ...fileProject],
       "cockpit"
     );
   }

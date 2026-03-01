@@ -96,20 +96,21 @@ describe("ContextManager", () => {
       const manager = new ContextManager(tmpDir);
       const resolved = manager.getResolved();
 
-      expect(resolved.global).toHaveLength(1);
-      expect(resolved.global[0]!.content).toBe("Use strict mode");
-      expect(resolved.global[0]!.scope).toBe("global");
+      // Check specific rules are present (profile rules may also be present)
+      const globalRule = resolved.global.find((r) => r.content === "Use strict mode");
+      expect(globalRule).toBeDefined();
+      expect(globalRule!.scope).toBe("global");
 
-      expect(resolved.project).toHaveLength(1);
-      expect(resolved.project[0]!.content).toBe("Follow project rules");
-      expect(resolved.project[0]!.scope).toBe("project");
+      const projectRule = resolved.project.find((r) => r.content === "Follow project rules");
+      expect(projectRule).toBeDefined();
+      expect(projectRule!.scope).toBe("project");
     });
 
-    it("returns empty context when no rules defined", () => {
+    it("returns no project-scoped context when no rules defined", () => {
       const manager = new ContextManager(tmpDir);
       const resolved = manager.getResolved();
 
-      expect(resolved.global).toHaveLength(0);
+      // project-scoped rules should be empty (profile only has global rules)
       expect(resolved.project).toHaveLength(0);
     });
   });
@@ -171,22 +172,26 @@ describe("ContextManager", () => {
       const manager = new ContextManager(tmpDir);
       const all = manager.listAll();
 
-      expect(all).toHaveLength(2);
+      // Filter to only rules from this tmpDir config (profile rules may also appear)
+      const localRules = all.filter((e) => e.configFile.startsWith(tmpDir));
+      expect(localRules).toHaveLength(2);
 
-      const globalEntry = all.find((e) => e.rule.scope === "global");
+      const globalEntry = localRules.find((e) => e.rule.scope === "global");
       expect(globalEntry).toBeDefined();
       expect(globalEntry!.rule.content).toBe("Global rule");
       expect(globalEntry!.configFile).toContain("config.yaml");
 
-      const projectEntry = all.find((e) => e.rule.scope === "project");
+      const projectEntry = localRules.find((e) => e.rule.scope === "project");
       expect(projectEntry).toBeDefined();
       expect(projectEntry!.rule.content).toBe("Project rule");
     });
 
-    it("returns empty array when no rules exist", () => {
+    it("returns no rules from local config when none defined", () => {
       const manager = new ContextManager(tmpDir);
       const all = manager.listAll();
-      expect(all).toHaveLength(0);
+      // Only check rules from the local tmpDir config (profile rules may appear too)
+      const localRules = all.filter((e) => e.configFile.startsWith(tmpDir));
+      expect(localRules).toHaveLength(0);
     });
   });
 });
