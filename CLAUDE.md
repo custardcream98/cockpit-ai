@@ -85,9 +85,6 @@ const config = tryLoadConfig(path, WorkspaceConfigSchema); // null if file missi
 - `yaml` package (not js-yaml) for YAML 1.2 support
 - tsup builds: ESM format, shebang added via `banner.js` for CLI binary
 
-## Current Phase: 2 (complete) → 3 (Profile & Sync)
+## All Phases Complete ✅
 
-Phase 3 scope:
-- `cockpit profile create|sync push|sync pull|export|import`
-- Git-based profile sync (`~/.cockpit/` → remote git repo)
-- Single-file export/import for portability
+Phases 1–6 all implemented. Remaining work: polish, publishing, more adapters.
