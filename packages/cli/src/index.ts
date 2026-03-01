@@ -1,4 +1,7 @@
 import { Command } from "commander";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
 import { initCommand } from "./commands/init.js";
 import { statusCommand } from "./commands/status.js";
 import { applyCommand } from "./commands/apply.js";
@@ -41,7 +44,7 @@ const program = new Command();
 program
   .name("cockpit")
   .description("AI-first Development Environment Orchestrator")
-  .version("0.0.1");
+  .version(version);
 
 // ─── init ──────────────────────────────────────────────────────────────────
 
