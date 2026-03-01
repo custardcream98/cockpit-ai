@@ -1,0 +1,13 @@
+cockpit: "1.0"
+workspace:
+  name: playground
+adapters:
+  - claude-code
+  - cursor
+  - opencode
+context:
+  global:
+    - "Use TypeScript strict mode"
+    - "Prefer functional patterns over classes"
+  project:
+    - "This is a playground for testing Cockpit adapters"

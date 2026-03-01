@@ -1,0 +1,18 @@
+name: reviewer
+role: Code review specialist focused on quality and security
+model: claude-sonnet-4-6
+
+context:
+  include:
+    - "**/*.ts"
+    - "**/*.js"
+  rules:
+    - Always check for security vulnerabilities
+    - Verify TypeScript strict mode compliance
+    - Look for performance anti-patterns
+
+skills:
+  - code-review
+
+worktree:
+  auto_create: false

@@ -12,7 +12,10 @@
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean",
-    "dev": "turbo run dev --parallel"
+    "dev": "turbo run dev --parallel",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
