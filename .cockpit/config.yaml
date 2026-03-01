@@ -9,4 +9,4 @@ adapters:
 
 context:
   files:
-    - ".cockpit/context/*.md"
+    - ".cockpit/context/**/*.md"

@@ -52,25 +52,27 @@ export function loadContextFile(filePath: string): ContextFileEntry {
  */
 function matchGlob(pattern: string, filePath: string): boolean {
   // Convert glob pattern to regex
+  // **/ → 0개 이상의 경로 세그먼트(선택적), ** → 임의 문자, * → /를 제외한 임의 문자
   const regexStr = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&") // escape regex special chars (except * and ?)
-    .replace(/\*\*/g, "___DOUBLE___")
-    .replace(/\*/g, "[^/]*")
-    .replace(/___DOUBLE___/g, ".*");
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&") // 정규식 특수문자 이스케이프 (* 와 ? 제외)
+    .replace(/\*\*\//g, "(?:.*/)?")        // **/ → zero or more directories (선택적)
+    .replace(/\*\*/g, ".*")                // ** alone → any characters
+    .replace(/\*/g, "[^/]*");              // * → any chars except /
 
   const re = new RegExp(`^${regexStr}$`);
   return re.test(filePath);
 }
 
-function walkDir(dir: string): string[] {
-  if (!existsSync(dir)) return [];
+function walkDir(dir: string, depth = 0, maxDepth = 5): string[] {
+  // symlink 순환 방지를 위한 depth limit
+  if (!existsSync(dir) || depth > maxDepth) return [];
   const entries: string[] = [];
 
   for (const name of readdirSync(dir)) {
     const fullPath = join(dir, name);
     const stat = statSync(fullPath);
     if (stat.isDirectory()) {
-      entries.push(...walkDir(fullPath));
+      entries.push(...walkDir(fullPath, depth + 1, maxDepth));
     } else {
       entries.push(fullPath);
     }
@@ -86,7 +88,7 @@ function walkDir(dir: string): string[] {
 export function discoverContextFiles(basePath: string, patterns?: string[]): ContextFileEntry[] {
   const effectivePatterns = patterns && patterns.length > 0
     ? patterns
-    : [".cockpit/context/*.md"];
+    : [".cockpit/context/**/*.md"];
 
   const results: ContextFileEntry[] = [];
   const seen = new Set<string>();
@@ -105,9 +107,8 @@ export function discoverContextFiles(basePath: string, patterns?: string[]): Con
 
       // Build relative path from basePath for matching
       const relPath = file.startsWith(basePath + "/") ? file.slice(basePath.length + 1) : file;
-      const normalizedPattern = isAbsolute(pattern) ? pattern : pattern;
 
-      if (matchGlob(normalizedPattern, relPath) || matchGlob(normalizedPattern, file)) {
+      if (matchGlob(pattern, relPath) || matchGlob(pattern, file)) {
         seen.add(file);
         try {
           results.push(loadContextFile(file));
