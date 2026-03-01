@@ -12,7 +12,7 @@
 
 When you work with AI coding tools (Claude Code, Cursor, GitHub Copilot, OpenCode, etc.), each tool has its own configuration format and location:
 
-- Claude Code → `.claude/commands/*.md`, `CLAUDE.md`
+- Claude Code → `.claude/skills/<name>/SKILL.md`, `CLAUDE.md`
 - Cursor → `.cursor/rules/*.mdc`
 - GitHub Copilot → `.github/copilot-instructions.md`
 
@@ -73,7 +73,7 @@ context:
     - "Use TypeScript strict mode"
     - "Prefer functional patterns"
   files:
-    - ".cockpit/context/*.md"   # load context from external markdown files
+    - ".cockpit/context/**/*.md"   # load context from external markdown files
 ```
 
 ## Context Files
@@ -108,9 +108,9 @@ prompt: |
 
 adapters:
   claude-code:
-    type: command    # → .claude/commands/code-review.md
+    type: skill    # → .claude/skills/code-review/SKILL.md
   cursor:
-    type: rule       # → .cursor/rules/code-review.mdc
+    type: rule     # → .cursor/rules/code-review.mdc
 ```
 
 ## CLI Commands

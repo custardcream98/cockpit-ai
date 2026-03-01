@@ -12,7 +12,7 @@
 
 AI 코딩 도구(Claude Code, Cursor, GitHub Copilot, OpenCode 등)와 작업할 때, 각 도구마다 설정 방식이 다릅니다:
 
-- Claude Code → `.claude/commands/*.md`, `CLAUDE.md`
+- Claude Code → `.claude/skills/<name>/SKILL.md`, `CLAUDE.md`
 - Cursor → `.cursor/rules/*.mdc`
 - GitHub Copilot → `.github/copilot-instructions.md`
 
@@ -73,7 +73,7 @@ context:
     - "TypeScript strict mode 사용"
     - "함수형 패턴 선호"
   files:
-    - ".cockpit/context/*.md"   # 외부 마크다운 파일에서 컨텍스트 로드
+    - ".cockpit/context/**/*.md"   # 외부 마크다운 파일에서 컨텍스트 로드
 ```
 
 ## 컨텍스트 파일
@@ -108,9 +108,9 @@ prompt: |
 
 adapters:
   claude-code:
-    type: command    # → .claude/commands/code-review.md로 생성
+    type: skill    # → .claude/skills/code-review/SKILL.md로 생성
   cursor:
-    type: rule       # → .cursor/rules/code-review.mdc로 생성
+    type: rule     # → .cursor/rules/code-review.mdc로 생성
 ```
 
 ## CLI 명령어
