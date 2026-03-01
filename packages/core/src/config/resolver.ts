@@ -117,6 +117,12 @@ export function mergeConfigs(
     project?.context?.project
   );
 
+  const contextFiles = mergeStringArrays(
+    profile?.context?.files,
+    workspace?.context?.files,
+    project?.context?.files
+  );
+
   // Skills includes
   const skillIncludes = mergeStringArrays(
     workspace?.skills?.include,
@@ -137,7 +143,7 @@ export function mergeConfigs(
     defaultAdapter,
     adapters,
     preferences: { language, defaultModel },
-    context: { global: globalContext, project: projectContext },
+    context: { global: globalContext, project: projectContext, files: contextFiles },
     skills: { include: skillIncludes },
     agents: { include: agentIncludes },
   };

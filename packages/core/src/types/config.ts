@@ -13,6 +13,7 @@ export type AdapterName = z.infer<typeof AdapterNameSchema>;
 const ContextRulesSchema = z.object({
   global: z.array(z.string()).optional(),
   project: z.array(z.string()).optional(),
+  files: z.array(z.string()).optional(),
 });
 
 const IncludeListSchema = z.object({
@@ -114,6 +115,7 @@ export interface ResolvedConfig {
   context: {
     global: string[];
     project: string[];
+    files: string[];
   };
 
   skills: {

@@ -84,9 +84,9 @@ describe("findProjectRoot", () => {
 });
 
 describe("findConfigPaths", () => {
-  it("returns all nulls when no configs exist", () => {
+  it("returns null workspace and project when no configs exist", () => {
     const result = findConfigPaths(tmpDir);
-    expect(result.profilePath).toBeNull();
+    // profilePath depends on whether ~/.cockpit/profile.yaml exists on the machine
     expect(result.workspacePath).toBeNull();
     expect(result.projectPath).toBeNull();
   });
