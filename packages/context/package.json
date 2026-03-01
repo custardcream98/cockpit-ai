@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/context",
+  "name": "@cockpit-ai/context",
   "version": "0.0.1",
   "description": "Cockpit context management",
   "type": "module",
@@ -28,7 +28,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cockpit/core": "workspace:*",
+    "@cockpit-ai/core": "workspace:*",
     "yaml": "^2.4.0"
   },
   "devDependencies": {

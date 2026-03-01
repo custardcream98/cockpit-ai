@@ -7,7 +7,7 @@ import {
   SkillDefinitionSchema,
   type ResolvedSkill,
   type AdapterName,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 
 // ─── Skill Loader ──────────────────────────────────────────────────────────
 

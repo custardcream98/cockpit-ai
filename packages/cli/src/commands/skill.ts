@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync, cpSync, rmSync } from "node:fs";
 import { join, resolve, basename, extname } from "node:path";
-import { findConfigPaths, COCKPIT_DIR } from "@cockpit/core";
-import { SkillRegistry, loadSkillsFromDir, defaultSkillTemplate } from "@cockpit/skills";
+import { findConfigPaths, COCKPIT_DIR } from "@cockpit-ai/core";
+import { SkillRegistry, loadSkillsFromDir, defaultSkillTemplate } from "@cockpit-ai/skills";
 import { ui } from "../ui/output.js";
 import chalk from "chalk";
 

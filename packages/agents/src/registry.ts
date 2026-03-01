@@ -1,4 +1,4 @@
-import { type ResolvedAgent } from "@cockpit/core";
+import { type ResolvedAgent } from "@cockpit-ai/core";
 import { loadAgentsFromDir } from "./loader.js";
 
 // ─── Agent Registry ─────────────────────────────────────────────────────────

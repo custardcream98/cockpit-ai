@@ -1,4 +1,4 @@
-import { type ResolvedContext } from "@cockpit/core";
+import { type ResolvedContext } from "@cockpit-ai/core";
 
 // ─── LLM-Oriented Formatting ───────────────────────────────────────────────
 

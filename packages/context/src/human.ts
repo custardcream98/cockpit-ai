@@ -1,4 +1,4 @@
-import { type ResolvedContext, type ResolvedConfig } from "@cockpit/core";
+import { type ResolvedContext, type ResolvedConfig } from "@cockpit-ai/core";
 
 // ─── Human-Readable Formatting ─────────────────────────────────────────────
 

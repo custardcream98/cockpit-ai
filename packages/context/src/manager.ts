@@ -9,7 +9,7 @@ import {
   CONFIG_FILE,
   type ContextRule,
   type ResolvedContext,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 
 // ─── ContextManager ────────────────────────────────────────────────────────
 

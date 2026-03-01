@@ -5,7 +5,7 @@ export { OpenCodeAdapter } from "./opencode/index.js";
 import { ClaudeCodeAdapter } from "./claude-code/index.js";
 import { CursorAdapter } from "./cursor/index.js";
 import { OpenCodeAdapter } from "./opencode/index.js";
-import { type CockpitAdapter, type AdapterName } from "@cockpit/core";
+import { type CockpitAdapter, type AdapterName } from "@cockpit-ai/core";
 
 // ─── Registry ──────────────────────────────────────────────────────────────
 

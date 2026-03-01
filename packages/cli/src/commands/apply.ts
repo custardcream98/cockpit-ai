@@ -6,9 +6,9 @@ import {
   buildResolvedContext,
   COCKPIT_DIR,
   type AdapterName,
-} from "@cockpit/core";
-import { getAdapters } from "@cockpit/adapters";
-import { SkillRegistry } from "@cockpit/skills";
+} from "@cockpit-ai/core";
+import { getAdapters } from "@cockpit-ai/adapters";
+import { SkillRegistry } from "@cockpit-ai/skills";
 import { ui } from "../ui/output.js";
 
 // ─── Apply Command ─────────────────────────────────────────────────────────

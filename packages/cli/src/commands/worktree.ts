@@ -5,7 +5,7 @@ import {
   assignAgent,
   readWorktreeState,
   getWorktreeState,
-} from "@cockpit/worktree";
+} from "@cockpit-ai/worktree";
 import { ui } from "../ui/output.js";
 import chalk from "chalk";
 import { resolve } from "node:path";

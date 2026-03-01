@@ -1,7 +1,7 @@
 import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
-import { COCKPIT_DIR, CONFIG_FILE } from "@cockpit/core";
+import { COCKPIT_DIR, CONFIG_FILE } from "@cockpit-ai/core";
 import { ui } from "../ui/output.js";
 
 // ─── Prompt Helpers ────────────────────────────────────────────────────────

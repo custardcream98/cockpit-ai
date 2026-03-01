@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { COCKPIT_DIR, CONFIG_FILE } from "@cockpit/core";
+import { COCKPIT_DIR, CONFIG_FILE } from "@cockpit-ai/core";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 

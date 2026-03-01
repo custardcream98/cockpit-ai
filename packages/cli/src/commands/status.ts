@@ -3,7 +3,7 @@ import chalk from "chalk";
 import {
   findConfigPaths,
   resolveConfig,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 import { ui, printKeyValue, printKeyList } from "../ui/output.js";
 
 // ─── Status Command ────────────────────────────────────────────────────────

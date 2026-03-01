@@ -6,7 +6,7 @@ import {
   ConfigValidationError,
   AgentDefinitionSchema,
   type ResolvedAgent,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 
 // ─── Agent Loader ───────────────────────────────────────────────────────────
 

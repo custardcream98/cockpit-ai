@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { ConfigValidationError } from "@cockpit/core";
+import { ConfigValidationError } from "@cockpit-ai/core";
 import { loadSkillFromFile, loadSkillsFromDir } from "../loader.js";
 
 let tmpDir: string;

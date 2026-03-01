@@ -5,7 +5,7 @@ import {
   type ResolvedSkill,
   type ResolvedContext,
   type ResolvedAgent,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 

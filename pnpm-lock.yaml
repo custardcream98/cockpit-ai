@@ -20,7 +20,7 @@ importers:
 
   packages/adapters:
     dependencies:
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -39,7 +39,7 @@ importers:
 
   packages/agents:
     dependencies:
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -58,22 +58,22 @@ importers:
 
   packages/cli:
     dependencies:
-      '@cockpit/adapters':
+      '@cockpit-ai/adapters':
         specifier: workspace:*
         version: link:../adapters
-      '@cockpit/agents':
+      '@cockpit-ai/agents':
         specifier: workspace:*
         version: link:../agents
-      '@cockpit/context':
+      '@cockpit-ai/context':
         specifier: workspace:*
         version: link:../context
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
-      '@cockpit/skills':
+      '@cockpit-ai/skills':
         specifier: workspace:*
         version: link:../skills
-      '@cockpit/worktree':
+      '@cockpit-ai/worktree':
         specifier: workspace:*
         version: link:../worktree
       chalk:
@@ -104,7 +104,7 @@ importers:
 
   packages/context:
     dependencies:
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
       yaml:
@@ -148,7 +148,7 @@ importers:
 
   packages/skills:
     dependencies:
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
       yaml:
@@ -170,7 +170,7 @@ importers:
 
   packages/worktree:
     dependencies:
-      '@cockpit/core':
+      '@cockpit-ai/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:

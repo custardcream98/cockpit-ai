@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { homedir } from "node:os";
-import { type AgentStatus } from "@cockpit/core";
+import { type AgentStatus } from "@cockpit-ai/core";
 
 // ─── Agent State ────────────────────────────────────────────────────────────
 

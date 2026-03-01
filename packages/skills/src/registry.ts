@@ -1,4 +1,4 @@
-import { type ResolvedSkill } from "@cockpit/core";
+import { type ResolvedSkill } from "@cockpit-ai/core";
 import { loadSkillsFromDir } from "./loader.js";
 
 // ─── Skill Registry ────────────────────────────────────────────────────────

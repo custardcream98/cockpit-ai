@@ -7,13 +7,13 @@ AI-first Development Environment Orchestrator. Write Once, Apply Anywhere.
 ```
 cockpit/
 ├── packages/
-│   ├── core/        @cockpit/core  — types, config loader, resolver, finder
-│   ├── cli/         @cockpit/cli   — commander-based CLI (cockpit binary)
-│   ├── adapters/    @cockpit/adapters — AI tool adapters (Phase 2+)
-│   ├── skills/      @cockpit/skills   — skill loader/registry (Phase 2+)
-│   ├── agents/      @cockpit/agents   — agent spawner/tracker (Phase 4+)
-│   ├── worktree/    @cockpit/worktree  — worktree orchestration (Phase 5+)
-│   └── context/     @cockpit/context   — context management (Phase 6+)
+│   ├── core/        @cockpit-ai/core  — types, config loader, resolver, finder
+│   ├── cli/         @cockpit-ai/cli   — commander-based CLI (cockpit binary)
+│   ├── adapters/    @cockpit-ai/adapters — AI tool adapters (Phase 2+)
+│   ├── skills/      @cockpit-ai/skills   — skill loader/registry (Phase 2+)
+│   ├── agents/      @cockpit-ai/agents   — agent spawner/tracker (Phase 4+)
+│   ├── worktree/    @cockpit-ai/worktree  — worktree orchestration (Phase 5+)
+│   └── context/     @cockpit-ai/context   — context management (Phase 6+)
 ├── turbo.json
 ├── pnpm-workspace.yaml
 └── tsconfig.base.json
@@ -25,8 +25,8 @@ cockpit/
 pnpm install          # install all workspace deps
 pnpm build            # turbo: build all packages (core first, then cli)
 pnpm test             # turbo: build → test all packages
-pnpm -F @cockpit/core test        # test single package
-pnpm -F @cockpit/cli  build       # build single package
+pnpm -F @cockpit-ai/core test        # test single package
+pnpm -F @cockpit-ai/cli  build       # build single package
 ```
 
 ## Architecture
@@ -38,7 +38,7 @@ pnpm -F @cockpit/cli  build       # build single package
 
 Resolution: all layers deep-merged, later wins for scalars, arrays accumulated.
 
-### Key Types (`@cockpit/core`)
+### Key Types (`@cockpit-ai/core`)
 - `ProfileConfig`, `WorkspaceConfig`, `ProjectConfig` — Zod-validated YAML schemas
 - `ResolvedConfig` — merged result from all three layers
 - `CockpitAdapter` — interface each AI tool must implement
@@ -49,7 +49,7 @@ Walks up from cwd collecting ALL `.cockpit/config.yaml` occurrences:
 - 1 found → workspace only (projectPath = null)
 - 2+ found → nearest = project, next ancestor = workspace
 
-### CLI (`@cockpit/cli`)
+### CLI (`@cockpit-ai/cli`)
 - `cockpit init [path] [--project]` — create `.cockpit/config.yaml`
 - `cockpit status [path]`           — show merged config info
 - `cockpit apply [--adapter=name]`  — apply to AI tools (Phase 2+)
@@ -59,7 +59,7 @@ Walks up from cwd collecting ALL `.cockpit/config.yaml` occurrences:
 
 ### Loading + validating YAML
 ```typescript
-import { loadConfig, tryLoadConfig } from "@cockpit/core";
+import { loadConfig, tryLoadConfig } from "@cockpit-ai/core";
 // Use ZodTypeAny + z.infer<S> — NOT ZodSchema<T> — to correctly handle .transform()
 const config = tryLoadConfig(path, WorkspaceConfigSchema); // null if file missing
 ```

@@ -11,7 +11,7 @@ import {
   tryLoadConfig,
   findConfigPaths,
   resolveConfig,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 import { ui, printKeyValue } from "../ui/output.js";
 
 // ─── Prompt Helpers ────────────────────────────────────────────────────────

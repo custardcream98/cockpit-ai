@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { AgentRegistry, setAgentStatus, getAgentStatus, readAgentState } from "@cockpit/agents";
-import { findConfigPaths, COCKPIT_DIR } from "@cockpit/core";
+import { AgentRegistry, setAgentStatus, getAgentStatus, readAgentState } from "@cockpit-ai/agents";
+import { findConfigPaths, COCKPIT_DIR } from "@cockpit-ai/core";
 import { ui } from "../ui/output.js";
 import chalk from "chalk";
 

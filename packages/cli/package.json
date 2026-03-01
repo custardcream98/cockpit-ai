@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/cli",
+  "name": "@cockpit-ai/cli",
   "version": "0.0.1",
   "description": "Cockpit CLI - AI-first Development Environment Orchestrator",
   "type": "module",
@@ -31,12 +31,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cockpit/adapters": "workspace:*",
-    "@cockpit/agents": "workspace:*",
-    "@cockpit/context": "workspace:*",
-    "@cockpit/core": "workspace:*",
-    "@cockpit/skills": "workspace:*",
-    "@cockpit/worktree": "workspace:*",
+    "@cockpit-ai/adapters": "workspace:*",
+    "@cockpit-ai/agents": "workspace:*",
+    "@cockpit-ai/context": "workspace:*",
+    "@cockpit-ai/core": "workspace:*",
+    "@cockpit-ai/skills": "workspace:*",
+    "@cockpit-ai/worktree": "workspace:*",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "ora": "^8.0.0",

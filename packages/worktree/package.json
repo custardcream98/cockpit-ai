@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/worktree",
+  "name": "@cockpit-ai/worktree",
   "version": "0.0.1",
   "description": "Cockpit worktree orchestration",
   "type": "module",
@@ -28,7 +28,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cockpit/core": "workspace:*"
+    "@cockpit-ai/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

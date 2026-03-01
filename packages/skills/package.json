@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/skills",
+  "name": "@cockpit-ai/skills",
   "version": "0.0.1",
   "description": "Cockpit skill loader and registry",
   "type": "module",
@@ -28,7 +28,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cockpit/core": "workspace:*",
+    "@cockpit-ai/core": "workspace:*",
     "yaml": "^2.4.0"
   },
   "devDependencies": {

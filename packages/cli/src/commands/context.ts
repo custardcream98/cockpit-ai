@@ -1,11 +1,11 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { ContextManager, contextSummary, buildClaudeMdSection } from "@cockpit/context";
+import { ContextManager, contextSummary, buildClaudeMdSection } from "@cockpit-ai/context";
 import {
   findConfigPaths,
   resolveConfig,
   buildResolvedContext,
-} from "@cockpit/core";
+} from "@cockpit-ai/core";
 import { ui } from "../ui/output.js";
 import chalk from "chalk";
 

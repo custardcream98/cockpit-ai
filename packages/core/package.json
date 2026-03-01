@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/core",
+  "name": "@cockpit-ai/core",
   "version": "0.0.1",
   "description": "Cockpit core types, config loader, and utilities",
   "type": "module",

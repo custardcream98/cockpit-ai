@@ -34,7 +34,7 @@ Cockpit is a **portable, composable workspace orchestrator** that lets you defin
 
 ```bash
 # Install
-npm install -g @cockpit/cli   # coming soon
+npm install -g @cockpit-ai/cli   # coming soon
 
 # Initialize a workspace
 cockpit init /path/to/workspace

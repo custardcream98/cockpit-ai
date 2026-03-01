@@ -1,5 +1,5 @@
 {
-  "name": "@cockpit/adapters",
+  "name": "@cockpit-ai/adapters",
   "version": "0.0.1",
   "description": "Cockpit AI tool adapters (Claude Code, Cursor, Copilot, etc.)",
   "type": "module",
@@ -24,7 +24,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cockpit/core": "workspace:*"
+    "@cockpit-ai/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

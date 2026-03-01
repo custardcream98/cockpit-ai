@@ -1,4 +1,4 @@
-import { type ResolvedSkill, type ResolvedContext, type ResolvedAgent } from "@cockpit/core";
+import { type ResolvedSkill, type ResolvedContext, type ResolvedAgent } from "@cockpit-ai/core";
 
 export function makeSkill(overrides: Partial<ResolvedSkill> = {}): ResolvedSkill {
   return {
