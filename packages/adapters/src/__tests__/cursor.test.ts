@@ -105,6 +105,19 @@ describe("applyContext", () => {
     const content = readFileSync(join(tmpDir, ".cursor", "rules", "cockpit-context.mdc"), "utf-8");
     expect(content).toContain("<!-- cockpit:managed -->");
   });
+
+  it("멀티라인 content는 raw block으로 렌더링한다 (bullet으로 합치지 않음)", async () => {
+    const multilineContext = makeContext({
+      global: [{ content: "Line one\nLine two\nLine three", scope: "global" }],
+      project: [],
+    });
+    await adapter.applyContext(tmpDir, multilineContext);
+    const content = readFileSync(join(tmpDir, ".cursor", "rules", "cockpit-context.mdc"), "utf-8");
+    // 멀티라인은 raw block으로 — bullet 없이 원본 텍스트가 그대로 있어야 함
+    expect(content).toContain("Line one\nLine two\nLine three");
+    // bullet으로 잘못 렌더링되면 "- Line one" 형태가 됨
+    expect(content).not.toContain("- Line one\nLine two");
+  });
 });
 
 // ─── applyAgent ────────────────────────────────────────────────────────────

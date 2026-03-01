@@ -10,7 +10,8 @@ import {
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const CLAUDE_DIR = ".claude";
-const COMMANDS_DIR = "commands";
+const SKILLS_DIR = "skills";    // 새 방식: .claude/skills/<name>/SKILL.md
+const COMMANDS_DIR = "commands"; // 구 방식: .claude/commands/<name>.md (clean 시 마이그레이션 정리)
 const AGENTS_DIR = "agents";
 const CLAUDE_MD = "CLAUDE.md";
 const COCKPIT_MARKER = "<!-- cockpit:managed -->";
@@ -22,20 +23,20 @@ function sanitizeName(name: string): string {
 }
 
 /**
- * Build the content for a .claude/commands/<name>.md file.
- * Claude Code slash commands use a specific markdown format.
+ * Build the content for a .claude/skills/<name>/SKILL.md file.
+ * 최신 Claude Code 컨벤션: YAML frontmatter + 프롬프트 본문.
  */
-function buildCommandMarkdown(skill: ResolvedSkill): string {
+function buildSkillMarkdown(skill: ResolvedSkill): string {
   const lines: string[] = [];
-  const promptTrimmed = skill.prompt.trim();
 
-  // Skip adding a title if the prompt already opens with a heading
-  if (!promptTrimmed.startsWith("# ")) {
-    lines.push(`# ${skill.description ?? skill.name}`);
-    lines.push("");
-  }
+  // YAML frontmatter (Claude Code SKILL.md 형식)
+  lines.push("---");
+  lines.push(`name: ${sanitizeName(skill.name)}`);
+  lines.push(`description: ${skill.description ?? skill.name}`);
+  lines.push("---");
+  lines.push("");
 
-  lines.push(promptTrimmed);
+  lines.push(skill.prompt.trim());
 
   if (skill.tools.length > 0) {
     lines.push("");
@@ -125,14 +126,11 @@ export class ClaudeCodeAdapter implements CockpitAdapter {
   }
 
   async applySkill(projectPath: string, skill: ResolvedSkill): Promise<void> {
-    const commandsDir = join(projectPath, CLAUDE_DIR, COMMANDS_DIR);
-    mkdirSync(commandsDir, { recursive: true });
+    // 최신 방식: .claude/skills/<name>/SKILL.md (디렉토리 기반)
+    const skillDir = join(projectPath, CLAUDE_DIR, SKILLS_DIR, sanitizeName(skill.name));
+    mkdirSync(skillDir, { recursive: true });
 
-    const fileName = `${sanitizeName(skill.name)}.md`;
-    const filePath = join(commandsDir, fileName);
-    const content = buildCommandMarkdown(skill);
-
-    writeFileSync(filePath, content, "utf-8");
+    writeFileSync(join(skillDir, "SKILL.md"), buildSkillMarkdown(skill), "utf-8");
   }
 
   async applyContext(projectPath: string, context: ResolvedContext): Promise<void> {
@@ -185,7 +183,21 @@ export class ClaudeCodeAdapter implements CockpitAdapter {
   }
 
   async clean(projectPath: string): Promise<void> {
-    // Remove cockpit-managed command files
+    // 새 방식(.claude/skills/): cockpit 관리 스킬 디렉토리 삭제
+    const skillsDir = join(projectPath, CLAUDE_DIR, SKILLS_DIR);
+    if (existsSync(skillsDir)) {
+      for (const dirName of readdirSync(skillsDir)) {
+        const skillDir = join(skillsDir, dirName);
+        const skillMdPath = join(skillDir, "SKILL.md");
+        if (!existsSync(skillMdPath)) continue;
+        const content = readFileSync(skillMdPath, "utf-8");
+        if (content.includes(COCKPIT_MARKER)) {
+          rmSync(skillDir, { recursive: true, force: true });
+        }
+      }
+    }
+
+    // 이전 방식(.claude/commands/) 마이그레이션 정리
     const commandsDir = join(projectPath, CLAUDE_DIR, COMMANDS_DIR);
     if (existsSync(commandsDir)) {
       for (const file of readdirSync(commandsDir)) {
@@ -213,7 +225,7 @@ export class ClaudeCodeAdapter implements CockpitAdapter {
       }
     }
 
-    // Remove agents dir if cockpit-managed
+    // agents 디렉토리에서 cockpit 관리 파일 삭제
     const agentsDir = join(projectPath, CLAUDE_DIR, AGENTS_DIR);
     if (existsSync(agentsDir)) {
       for (const file of readdirSync(agentsDir)) {

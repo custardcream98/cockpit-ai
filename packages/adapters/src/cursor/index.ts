@@ -77,21 +77,27 @@ export class CursorAdapter implements CockpitAdapter {
     const allRules = [...context.global, ...context.project];
     const lines: string[] = [];
 
+    // 멀티라인 content는 raw block, 단일라인은 bullet으로 렌더링
+    const renderRule = (rule: { content: string }) => {
+      if (rule.content.includes("\n")) {
+        lines.push(rule.content);
+        lines.push("");
+      } else {
+        lines.push(`- ${rule.content}`);
+      }
+    };
+
     if (context.global.length > 0) {
       lines.push("## Global Rules");
       lines.push("");
-      for (const rule of context.global) {
-        lines.push(`- ${rule.content}`);
-      }
+      for (const rule of context.global) renderRule(rule);
     }
 
     if (context.project.length > 0) {
       if (lines.length > 0) lines.push("");
       lines.push("## Project Rules");
       lines.push("");
-      for (const rule of context.project) {
-        lines.push(`- ${rule.content}`);
-      }
+      for (const rule of context.project) renderRule(rule);
     }
 
     const body = allRules.length > 0

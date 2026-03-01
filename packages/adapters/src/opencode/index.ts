@@ -10,7 +10,7 @@ import {
 // ─── Constants ─────────────────────────────────────────────────────────────
 
 const OPENCODE_DIR = ".opencode";
-const SKILLS_DIR = "skills";
+const SKILLS_DIR = "skills";    // 새 방식: .opencode/skills/<name>/SKILL.md
 const AGENTS_DIR = "agents";
 const AGENTS_MD = "AGENTS.md";
 const OPENCODE_JSON = "opencode.json";
@@ -27,13 +27,13 @@ function sanitizeName(name: string): string {
 function buildSkillMarkdown(skill: ResolvedSkill): string {
   const lines: string[] = [];
 
-  if (skill.description) {
-    lines.push(`# ${skill.description}`);
-  } else {
-    lines.push(`# ${skill.name}`);
-  }
-
+  // YAML frontmatter (OpenCode SKILL.md 형식 — name, description 필수)
+  lines.push("---");
+  lines.push(`name: ${sanitizeName(skill.name)}`);
+  lines.push(`description: ${skill.description ?? skill.name}`);
+  lines.push("---");
   lines.push("");
+
   lines.push(skill.prompt.trim());
 
   if (skill.tools.length > 0) {
@@ -53,21 +53,27 @@ function buildCockpitSection(context: ResolvedContext): string {
 
   const allRules = [...context.global, ...context.project];
 
+  // 멀티라인 content는 raw block, 단일라인은 bullet으로 렌더링
+  const renderRule = (rule: { content: string }) => {
+    if (rule.content.includes("\n")) {
+      lines.push(rule.content);
+      lines.push("");
+    } else {
+      lines.push(`- ${rule.content}`);
+    }
+  };
+
   if (context.global.length > 0) {
     lines.push("## Global Rules");
     lines.push("");
-    for (const rule of context.global) {
-      lines.push(`- ${rule.content}`);
-    }
+    for (const rule of context.global) renderRule(rule);
   }
 
   if (context.project.length > 0) {
     if (context.global.length > 0) lines.push("");
     lines.push("## Project Rules");
     lines.push("");
-    for (const rule of context.project) {
-      lines.push(`- ${rule.content}`);
-    }
+    for (const rule of context.project) renderRule(rule);
   }
 
   if (allRules.length === 0) {
@@ -114,12 +120,11 @@ export class OpenCodeAdapter implements CockpitAdapter {
   }
 
   async applySkill(projectPath: string, skill: ResolvedSkill): Promise<void> {
-    const skillsDir = join(projectPath, OPENCODE_DIR, SKILLS_DIR);
-    mkdirSync(skillsDir, { recursive: true });
+    // 최신 방식: .opencode/skills/<name>/SKILL.md (디렉토리 기반)
+    const skillDir = join(projectPath, OPENCODE_DIR, SKILLS_DIR, sanitizeName(skill.name));
+    mkdirSync(skillDir, { recursive: true });
 
-    const fileName = `${sanitizeName(skill.name)}.md`;
-    const content = buildSkillMarkdown(skill);
-    writeFileSync(join(skillsDir, fileName), content, "utf-8");
+    writeFileSync(join(skillDir, "SKILL.md"), buildSkillMarkdown(skill), "utf-8");
   }
 
   async applyContext(projectPath: string, context: ResolvedContext): Promise<void> {
@@ -168,15 +173,16 @@ export class OpenCodeAdapter implements CockpitAdapter {
   }
 
   async clean(projectPath: string): Promise<void> {
-    // Remove cockpit-managed skill files
+    // 새 방식(.opencode/skills/): cockpit 관리 스킬 디렉토리 삭제
     const skillsDir = join(projectPath, OPENCODE_DIR, SKILLS_DIR);
     if (existsSync(skillsDir)) {
-      for (const file of readdirSync(skillsDir)) {
-        if (!file.endsWith(".md")) continue;
-        const filePath = join(skillsDir, file);
-        const content = readFileSync(filePath, "utf-8");
+      for (const dirName of readdirSync(skillsDir)) {
+        const skillDir = join(skillsDir, dirName);
+        const skillMdPath = join(skillDir, "SKILL.md");
+        if (!existsSync(skillMdPath)) continue;
+        const content = readFileSync(skillMdPath, "utf-8");
         if (content.includes(COCKPIT_MARKER)) {
-          rmSync(filePath);
+          rmSync(skillDir, { recursive: true, force: true });
         }
       }
     }

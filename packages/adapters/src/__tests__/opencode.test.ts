@@ -39,22 +39,29 @@ describe("detect", () => {
 // ─── applySkill ────────────────────────────────────────────────────────────
 
 describe("applySkill", () => {
-  it("creates .opencode/skills/<name>.md", async () => {
+  it("creates .opencode/skills/<name>/SKILL.md", async () => {
     await adapter.applySkill(tmpDir, makeSkill());
-    const path = join(tmpDir, ".opencode", "skills", "code-review.md");
+    const path = join(tmpDir, ".opencode", "skills", "code-review", "SKILL.md");
     expect(existsSync(path)).toBe(true);
   });
 
   it("file contains skill prompt", async () => {
     await adapter.applySkill(tmpDir, makeSkill());
-    const content = readFileSync(join(tmpDir, ".opencode", "skills", "code-review.md"), "utf-8");
+    const content = readFileSync(join(tmpDir, ".opencode", "skills", "code-review", "SKILL.md"), "utf-8");
     expect(content).toContain("Review the code for bugs");
   });
 
   it("file contains cockpit marker", async () => {
     await adapter.applySkill(tmpDir, makeSkill());
-    const content = readFileSync(join(tmpDir, ".opencode", "skills", "code-review.md"), "utf-8");
+    const content = readFileSync(join(tmpDir, ".opencode", "skills", "code-review", "SKILL.md"), "utf-8");
     expect(content).toContain("<!-- cockpit:managed -->");
+  });
+
+  it("file contains YAML frontmatter with name and description", async () => {
+    await adapter.applySkill(tmpDir, makeSkill());
+    const content = readFileSync(join(tmpDir, ".opencode", "skills", "code-review", "SKILL.md"), "utf-8");
+    expect(content).toContain("name: code-review");
+    expect(content).toContain("description:");
   });
 
   it("creates skills dir if it doesn't exist", async () => {
@@ -63,9 +70,9 @@ describe("applySkill", () => {
     expect(existsSync(join(tmpDir, ".opencode", "skills"))).toBe(true);
   });
 
-  it("sanitizes skill name for filename", async () => {
+  it("sanitizes skill name for directory name", async () => {
     await adapter.applySkill(tmpDir, makeSkill({ name: "My Skill!" }));
-    expect(existsSync(join(tmpDir, ".opencode", "skills", "my-skill-.md"))).toBe(true);
+    expect(existsSync(join(tmpDir, ".opencode", "skills", "my-skill-", "SKILL.md"))).toBe(true);
   });
 });
 
@@ -134,20 +141,21 @@ describe("applyAgent", () => {
 // ─── clean ─────────────────────────────────────────────────────────────────
 
 describe("clean", () => {
-  it("removes cockpit-managed skill files", async () => {
+  it("removes cockpit-managed skill directories", async () => {
     await adapter.applySkill(tmpDir, makeSkill());
-    const path = join(tmpDir, ".opencode", "skills", "code-review.md");
-    expect(existsSync(path)).toBe(true);
+    const skillDir = join(tmpDir, ".opencode", "skills", "code-review");
+    expect(existsSync(skillDir)).toBe(true);
 
     await adapter.clean(tmpDir);
-    expect(existsSync(path)).toBe(false);
+    expect(existsSync(skillDir)).toBe(false);
   });
 
-  it("preserves non-cockpit skill files", async () => {
-    const skillsDir = join(tmpDir, ".opencode", "skills");
-    mkdirSync(skillsDir, { recursive: true });
-    const manualFile = join(skillsDir, "manual.md");
-    writeFileSync(manualFile, "# Manual skill\n\nNot managed by cockpit.", "utf-8");
+  it("preserves non-cockpit skill directories", async () => {
+    // 수동으로 생성한 스킬 디렉토리 (cockpit marker 없음)
+    const manualSkillDir = join(tmpDir, ".opencode", "skills", "manual-skill");
+    mkdirSync(manualSkillDir, { recursive: true });
+    const manualFile = join(manualSkillDir, "SKILL.md");
+    writeFileSync(manualFile, "---\nname: manual-skill\n---\n# Manual skill\n\nNot managed by cockpit.", "utf-8");
 
     await adapter.applySkill(tmpDir, makeSkill());
     await adapter.clean(tmpDir);
