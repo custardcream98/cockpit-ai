@@ -85,10 +85,9 @@ const config = tryLoadConfig(path, WorkspaceConfigSchema); // null if file missi
 - `yaml` package (not js-yaml) for YAML 1.2 support
 - tsup builds: ESM format, shebang added via `banner.js` for CLI binary
 
-## Current Phase: 1 (complete) → 2 (Skills & Adapters)
+## Current Phase: 2 (complete) → 3 (Profile & Sync)
 
-Phase 2 scope:
-- `@cockpit/adapters` package — Claude Code adapter
-- `@cockpit/skills` package — skill loader/registry
-- `cockpit skill list|add|create|remove` commands
-- `cockpit apply` — actual file generation in `.claude/commands/` and `CLAUDE.md`
+Phase 3 scope:
+- `cockpit profile create|sync push|sync pull|export|import`
+- Git-based profile sync (`~/.cockpit/` → remote git repo)
+- Single-file export/import for portability
