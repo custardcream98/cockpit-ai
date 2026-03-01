@@ -1,0 +1,25 @@
+{
+  "name": "@cockpit/context",
+  "version": "0.0.1",
+  "description": "Cockpit context management",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "exports": { ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" } },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": { "@cockpit/core": "workspace:*", "yaml": "^2.4.0" },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
