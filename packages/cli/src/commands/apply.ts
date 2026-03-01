@@ -3,12 +3,13 @@ import ora from "ora";
 import {
   findConfigPaths,
   resolveConfig,
-  buildResolvedContext,
   COCKPIT_DIR,
   type AdapterName,
 } from "@cockpit-ai/core";
 import { getAdapters } from "@cockpit-ai/adapters";
 import { SkillRegistry } from "@cockpit-ai/skills";
+import { ContextManager } from "@cockpit-ai/context";
+import { getBuiltinSkills } from "../builtins/index.js";
 import { ui } from "../ui/output.js";
 
 // ─── Apply Command ─────────────────────────────────────────────────────────
@@ -78,15 +79,12 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
     ui.warn(`Skipped skill ${file}: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  const skills = registry.list();
+  const skills = [...registry.list(), ...getBuiltinSkills()];
 
-  // ── Build context ────────────────────────────────────────────────────────
+  // ── Build context (inline rules + external .md files) ───────────────────
 
-  const context = buildResolvedContext(
-    config.context.global,
-    config.context.project,
-    "cockpit"
-  );
+  const contextManager = new ContextManager(cwd);
+  const context = contextManager.getResolved();
 
   // ── Apply to each adapter ────────────────────────────────────────────────
 
