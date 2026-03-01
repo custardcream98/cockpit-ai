@@ -1,5 +1,17 @@
 # @cockpit-ai/cli
 
+## 0.1.1
+
+### Patch Changes
+
+- 2ab8d33: fix: update skill template to directory-based SKILL.md format, read CLI version from package.json
+
+  - `cockpit skill create` 템플릿을 구 `type: command` → `type: skill` 포맷으로 수정
+  - CLI `--version` 출력이 package.json에서 동적으로 읽도록 수정 (기존 하드코딩 0.0.1 제거)
+
+- Updated dependencies [2ab8d33]
+  - @cockpit-ai/skills@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
