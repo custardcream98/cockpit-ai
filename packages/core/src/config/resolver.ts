@@ -26,13 +26,6 @@ function mergeStringArrays(...arrays: (string[] | undefined)[]): string[] {
   return result;
 }
 
-function lastDefined<T>(...values: (T | undefined)[]): T | undefined {
-  for (let i = values.length - 1; i >= 0; i--) {
-    if (values[i] !== undefined) return values[i];
-  }
-  return undefined;
-}
-
 // ─── Resolver ─────────────────────────────────────────────────────────────
 
 export interface ResolveOptions {
