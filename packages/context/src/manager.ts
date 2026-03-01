@@ -4,7 +4,6 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import {
   findConfigPaths,
   resolveConfig,
-  buildResolvedContext,
   type ContextRule,
   type ResolvedContext,
 } from "@cockpit-ai/core";
@@ -36,19 +35,30 @@ export class ContextManager {
         ? discoverContextFiles(basePath, config.context.files)
         : autoDiscoverContextFiles(basePath);
 
-    // Separate file entries by scope and append to inline rules
+    // Inline rules (source = "cockpit")
+    const inlineGlobal = config.context.global.map((content) => ({
+      content,
+      scope: "global" as const,
+      source: "cockpit",
+    }));
+    const inlineProject = config.context.project.map((content) => ({
+      content,
+      scope: "project" as const,
+      source: "cockpit",
+    }));
+
+    // File-based rules — preserve absolute path as source for traceability
     const fileGlobal = fileEntries
       .filter((e) => e.scope === "global")
-      .map((e) => e.content);
+      .map((e) => ({ content: e.content, scope: "global" as const, source: e.path }));
     const fileProject = fileEntries
       .filter((e) => e.scope === "project")
-      .map((e) => e.content);
+      .map((e) => ({ content: e.content, scope: "project" as const, source: e.path }));
 
-    return buildResolvedContext(
-      [...config.context.global, ...fileGlobal],
-      [...config.context.project, ...fileProject],
-      "cockpit"
-    );
+    return {
+      global: [...inlineGlobal, ...fileGlobal],
+      project: [...inlineProject, ...fileProject],
+    };
   }
 
   /**

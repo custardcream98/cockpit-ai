@@ -67,6 +67,30 @@ function buildClaudeMd(existing: string | null, context: ResolvedContext): strin
   return base ? `${base}\n\n${cockpitSection}` : cockpitSection;
 }
 
+/**
+ * Extract a display label from a rule's source path.
+ * Returns the path relative to `.cockpit/context/` for file-based rules,
+ * or null for inline/builtin rules.
+ */
+function contextFileLabel(source: string | undefined): string | null {
+  if (!source || source === "cockpit" || source === "cockpit-builtin") return null;
+  const marker = ".cockpit/context/";
+  const idx = source.indexOf(marker);
+  return idx !== -1 ? source.slice(idx + marker.length) : null;
+}
+
+function renderRule(lines: string[], rule: { content: string; source?: string }): void {
+  const label = contextFileLabel(rule.source);
+  if (label) lines.push(`<!-- ${label} -->`);
+
+  if (rule.content.includes("\n")) {
+    lines.push(rule.content);
+    lines.push("");
+  } else {
+    lines.push(`- ${rule.content}`);
+  }
+}
+
 function buildCockpitContextSection(context: ResolvedContext): string {
   const lines: string[] = [COCKPIT_MARKER];
 
@@ -79,27 +103,13 @@ function buildCockpitContextSection(context: ResolvedContext): string {
   if (context.global.length > 0) {
     lines.push("\n## Global Rules");
     lines.push("");
-    for (const rule of context.global) {
-      if (rule.content.includes("\n")) {
-        lines.push(rule.content);
-        lines.push("");
-      } else {
-        lines.push(`- ${rule.content}`);
-      }
-    }
+    for (const rule of context.global) renderRule(lines, rule);
   }
 
   if (context.project.length > 0) {
     lines.push("\n## Project Rules");
     lines.push("");
-    for (const rule of context.project) {
-      if (rule.content.includes("\n")) {
-        lines.push(rule.content);
-        lines.push("");
-      } else {
-        lines.push(`- ${rule.content}`);
-      }
-    }
+    for (const rule of context.project) renderRule(lines, rule);
   }
 
   return lines.join("\n");

@@ -6,9 +6,5 @@ adapters:
   - cursor
   - opencode
 context:
-  # Inline rules (short, quick notes)
   global:
     - "Node.js >= 20 required"
-  # External context files (richer, file-based context)
-  files:
-    - ".cockpit/context/*.md"
