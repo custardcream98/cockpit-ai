@@ -102,6 +102,19 @@ describe("autoDiscoverContextFiles", () => {
     expect(entries[0]!.content).toBe("A rule");
   });
 
+  it("discovers .md files in subdirectories", () => {
+    // 서브디렉토리 내 파일도 재귀적으로 탐색해야 함
+    mkdirSync(join(tmpDir, ".cockpit", "context", "testing"), { recursive: true });
+    writeFileSync(join(tmpDir, ".cockpit", "context", "root.md"), "Root rule", "utf-8");
+    writeFileSync(join(tmpDir, ".cockpit", "context", "testing", "vitest.md"), "Test rule", "utf-8");
+
+    const entries = autoDiscoverContextFiles(tmpDir);
+    expect(entries).toHaveLength(2);
+
+    const contents = entries.map((e) => e.content).sort();
+    expect(contents).toEqual(["Root rule", "Test rule"]);
+  });
+
   it("correctly parses scope from discovered files", () => {
     writeFileSync(
       join(tmpDir, ".cockpit", "context", "global.md"),
@@ -151,5 +164,19 @@ describe("discoverContextFiles", () => {
   it("returns empty array when no files match", () => {
     const entries = discoverContextFiles(tmpDir, [".cockpit/context/nonexistent/*.md"]);
     expect(entries).toEqual([]);
+  });
+
+  it("discovers files in subdirectories with **/*.md pattern", () => {
+    // **/*.md 패턴이 서브디렉토리 파일도 매칭해야 함
+    mkdirSync(join(tmpDir, ".cockpit", "context", "frontend"), { recursive: true });
+    writeFileSync(join(tmpDir, ".cockpit", "context", "conventions.md"), "Convention", "utf-8");
+    writeFileSync(join(tmpDir, ".cockpit", "context", "frontend", "react.md"), "React rule", "utf-8");
+
+    const entries = discoverContextFiles(tmpDir, [".cockpit/context/**/*.md"]);
+    expect(entries.length).toBeGreaterThanOrEqual(2);
+
+    const contents = entries.map((e) => e.content).sort();
+    expect(contents).toContain("Convention");
+    expect(contents).toContain("React rule");
   });
 });

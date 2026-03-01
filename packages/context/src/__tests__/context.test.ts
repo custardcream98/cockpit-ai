@@ -113,6 +113,34 @@ describe("ContextManager", () => {
       // project-scoped rules should be empty (profile only has global rules)
       expect(resolved.project).toHaveLength(0);
     });
+
+    it("merges file-based context from .cockpit/context/ into resolved context", () => {
+      // .cockpit/context/ 디렉토리에 파일 생성
+      mkdirSync(join(tmpDir, ".cockpit", "context"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, ".cockpit", "context", "conventions.md"),
+        "Use strict TypeScript.",
+        "utf-8"
+      );
+      writeFileSync(
+        join(tmpDir, ".cockpit", "context", "style.md"),
+        "---\nscope: project\n---\nFollow project style guide.",
+        "utf-8"
+      );
+
+      const manager = new ContextManager(tmpDir);
+      const resolved = manager.getResolved();
+
+      // 파일 기반 global 룰이 포함되어야 함
+      const fileGlobal = resolved.global.find((r) => r.content === "Use strict TypeScript.");
+      expect(fileGlobal).toBeDefined();
+      expect(fileGlobal!.scope).toBe("global");
+
+      // 파일 기반 project 룰이 포함되어야 함
+      const fileProject = resolved.project.find((r) => r.content === "Follow project style guide.");
+      expect(fileProject).toBeDefined();
+      expect(fileProject!.scope).toBe("project");
+    });
   });
 
   describe("removeRule", () => {
@@ -192,6 +220,35 @@ describe("ContextManager", () => {
       // Only check rules from the local tmpDir config (profile rules may appear too)
       const localRules = all.filter((e) => e.configFile.startsWith(tmpDir));
       expect(localRules).toHaveLength(0);
+    });
+
+    it("파일 기반 컨텍스트 룰을 listAll 결과에 포함한다", () => {
+      // .cockpit/context/ 디렉토리에 파일 생성
+      mkdirSync(join(tmpDir, ".cockpit", "context"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, ".cockpit", "context", "global-rules.md"),
+        "Always use TypeScript.",
+        "utf-8"
+      );
+      writeFileSync(
+        join(tmpDir, ".cockpit", "context", "project-rules.md"),
+        "---\nscope: project\n---\nFollow project conventions.",
+        "utf-8"
+      );
+
+      const manager = new ContextManager(tmpDir);
+      const all = manager.listAll();
+
+      // 파일 기반 룰이 listAll 결과에 포함되어야 함
+      const globalFileRule = all.find((e) => e.rule.content === "Always use TypeScript.");
+      expect(globalFileRule).toBeDefined();
+      expect(globalFileRule!.rule.scope).toBe("global");
+      expect(globalFileRule!.configFile).toContain("global-rules.md");
+
+      const projectFileRule = all.find((e) => e.rule.content === "Follow project conventions.");
+      expect(projectFileRule).toBeDefined();
+      expect(projectFileRule!.rule.scope).toBe("project");
+      expect(projectFileRule!.configFile).toContain("project-rules.md");
     });
   });
 });
