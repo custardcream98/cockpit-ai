@@ -1,6 +1,6 @@
 {
   "name": "@cockpit-ai/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cockpit core types, config loader, and utilities",
   "type": "module",
   "engines": {
@@ -14,8 +14,12 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

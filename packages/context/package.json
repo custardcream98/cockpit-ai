@@ -1,6 +1,6 @@
 {
   "name": "@cockpit-ai/context",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cockpit context management",
   "type": "module",
   "engines": {
