@@ -122,11 +122,13 @@ export class ContextManager {
 
   /**
    * Return all rules as a flat array with source info.
+   * YAML 인라인 룰과 파일 기반 컨텍스트 룰을 모두 포함한다.
    */
   listAll(): Array<{ rule: ContextRule; configFile: string }> {
     const paths = findConfigPaths(this.cwd);
     const results: Array<{ rule: ContextRule; configFile: string }> = [];
 
+    // 1. YAML config 기반 인라인 룰
     const configFiles = [
       paths.profilePath,
       paths.workspacePath,
@@ -152,6 +154,26 @@ export class ContextManager {
           });
         }
       }
+    }
+
+    // 2. 파일 기반 컨텍스트 룰 (.cockpit/context/**/*.md)
+    const config = resolveConfig(paths);
+    const basePath = paths.workspacePath
+      ? resolve(join(paths.workspacePath, "..", ".."))
+      : paths.projectPath
+      ? resolve(join(paths.projectPath, "..", ".."))
+      : this.cwd;
+
+    const fileEntries =
+      config.context.files.length > 0
+        ? discoverContextFiles(basePath, config.context.files)
+        : autoDiscoverContextFiles(basePath);
+
+    for (const entry of fileEntries) {
+      results.push({
+        rule: { content: entry.content, scope: entry.scope, source: entry.path },
+        configFile: entry.path,
+      });
     }
 
     return results;
