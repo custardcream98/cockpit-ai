@@ -27,15 +27,15 @@ function sanitizeName(name: string): string {
  */
 function buildCommandMarkdown(skill: ResolvedSkill): string {
   const lines: string[] = [];
+  const promptTrimmed = skill.prompt.trim();
 
-  if (skill.description) {
-    lines.push(`# ${skill.description}`);
-  } else {
-    lines.push(`# ${skill.name}`);
+  // Skip adding a title if the prompt already opens with a heading
+  if (!promptTrimmed.startsWith("# ")) {
+    lines.push(`# ${skill.description ?? skill.name}`);
+    lines.push("");
   }
 
-  lines.push("");
-  lines.push(skill.prompt.trim());
+  lines.push(promptTrimmed);
 
   if (skill.tools.length > 0) {
     lines.push("");
@@ -80,7 +80,12 @@ function buildCockpitContextSection(context: ResolvedContext): string {
     lines.push("\n## Global Rules");
     lines.push("");
     for (const rule of context.global) {
-      lines.push(`- ${rule.content}`);
+      if (rule.content.includes("\n")) {
+        lines.push(rule.content);
+        lines.push("");
+      } else {
+        lines.push(`- ${rule.content}`);
+      }
     }
   }
 
@@ -88,7 +93,12 @@ function buildCockpitContextSection(context: ResolvedContext): string {
     lines.push("\n## Project Rules");
     lines.push("");
     for (const rule of context.project) {
-      lines.push(`- ${rule.content}`);
+      if (rule.content.includes("\n")) {
+        lines.push(rule.content);
+        lines.push("");
+      } else {
+        lines.push(`- ${rule.content}`);
+      }
     }
   }
 
