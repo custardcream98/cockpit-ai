@@ -18,7 +18,7 @@ export const SkillDefinitionSchema = z.object({
     .record(
       z.string(),
       z.object({
-        type: z.enum(["command", "rule"]).optional(),
+        type: z.enum(["command", "skill", "rule"]).optional(),
         alwaysApply: z.boolean().optional(),
       })
     )

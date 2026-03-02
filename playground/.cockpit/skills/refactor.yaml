@@ -22,4 +22,4 @@ adapters:
   cursor:
     alwaysApply: false
   claude-code:
-    type: command
+    type: skill
