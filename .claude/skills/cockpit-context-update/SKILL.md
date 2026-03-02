@@ -1,3 +1,8 @@
+---
+name: cockpit-context-update
+description: Analyze project and update Cockpit context files
+---
+
 # Update Cockpit Context
 
 Analyze the current project and update the Cockpit context files in `.cockpit/context/`.
