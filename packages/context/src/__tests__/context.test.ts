@@ -143,7 +143,10 @@ describe("ContextManager", () => {
     });
 
     it("프로젝트별 컨텍스트 파일을 project scope로 포함", () => {
-      // tmpDir/.cockpit/projects/myproject/context/ 에 파일 생성
+      // .cockpit/projects/myproject.yaml 생성 (프로젝트 등록)
+      mkdirSync(join(tmpDir, ".cockpit", "projects"), { recursive: true });
+      writeFileSync(join(tmpDir, ".cockpit", "projects", "myproject.yaml"), "cockpit: '1.0'\nproject:\n  name: myproject\n", "utf-8");
+      // context 파일 생성
       mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
       writeFileSync(
         join(tmpDir, ".cockpit", "projects", "myproject", "context", "arch.md"),
@@ -163,6 +166,9 @@ describe("ContextManager", () => {
     });
 
     it("다른 프로젝트 파일은 포함하지 않음", () => {
+      // myproject 등록
+      mkdirSync(join(tmpDir, ".cockpit", "projects"), { recursive: true });
+      writeFileSync(join(tmpDir, ".cockpit", "projects", "myproject.yaml"), "cockpit: '1.0'\nproject:\n  name: myproject\n", "utf-8");
       mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
       mkdirSync(join(tmpDir, ".cockpit", "projects", "other", "context"), { recursive: true });
       writeFileSync(
@@ -306,6 +312,9 @@ describe("ContextManager", () => {
     });
 
     it("프로젝트별 컨텍스트 파일을 listAll 결과에 포함한다", () => {
+      // myproject 등록
+      mkdirSync(join(tmpDir, ".cockpit", "projects"), { recursive: true });
+      writeFileSync(join(tmpDir, ".cockpit", "projects", "myproject.yaml"), "cockpit: '1.0'\nproject:\n  name: myproject\n", "utf-8");
       mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
       writeFileSync(
         join(tmpDir, ".cockpit", "projects", "myproject", "context", "arch.md"),

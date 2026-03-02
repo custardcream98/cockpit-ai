@@ -6,7 +6,7 @@ import { prompt } from "../ui/prompt.js";
 
 // ─── Template Generators ───────────────────────────────────────────────────
 
-function workspaceTemplate(name: string): string {
+export function workspaceTemplate(name: string): string {
   return `cockpit: "1.0"
 
 workspace:
@@ -22,21 +22,9 @@ context:
 `;
 }
 
-function projectTemplate(name: string): string {
-  return `cockpit: "1.0"
-
-project:
-  name: ${name}
-
-context:
-  global: []
-`;
-}
-
 // ─── Init Command ──────────────────────────────────────────────────────────
 
 export interface InitOptions {
-  project?: boolean;
   nonInteractive?: boolean;
 }
 
@@ -51,10 +39,7 @@ export async function initCommand(targetPath: string | undefined, options: InitO
     return;
   }
 
-  const isProject = options.project === true;
-  const kind = isProject ? "project" : "workspace";
-
-  ui.heading(`Initializing Cockpit ${kind}`);
+  ui.heading("Initializing Cockpit workspace");
   ui.info(`Target directory: ${dir}`);
   ui.blank();
 
@@ -62,18 +47,16 @@ export async function initCommand(targetPath: string | undefined, options: InitO
   // 비대화형 모드(setup 등)에서는 기본값을 바로 사용
   const name = options.nonInteractive
     ? defaultName
-    : await prompt(`${kind} name`, defaultName);
+    : await prompt("workspace name", defaultName);
 
   mkdirSync(cockpitDir, { recursive: true });
-
-  const content = isProject ? projectTemplate(name) : workspaceTemplate(name);
-  writeFileSync(configPath, content, "utf-8");
+  writeFileSync(configPath, workspaceTemplate(name), "utf-8");
 
   ui.blank();
   ui.success(`Created ${configPath}`);
   ui.blank();
   ui.dim("Next steps:");
-  ui.dim(`  cockpit status         — view current environment`);
-  ui.dim(`  cockpit skill list     — browse available skills`);
-  ui.dim(`  cockpit apply          — apply config to AI tools`);
+  ui.dim(`  cockpit project init <name>  — add a project`);
+  ui.dim(`  cockpit context add <rule>   — add a context rule`);
+  ui.dim(`  cockpit apply                — apply config to AI tools`);
 }

@@ -4,11 +4,12 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   findWorkspaceRoot,
-  findProjectRoot,
   findConfigPaths,
   getCockpitConfigPath,
+  getProjectConfigPath,
   COCKPIT_DIR,
   CONFIG_FILE,
+  PROJECTS_DIR,
 } from "../config/finder.js";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -24,25 +25,32 @@ afterEach(() => {
   rmSync(tmpDir, { recursive: true, force: true });
 });
 
-function createCockpitConfig(dir: string, content = "cockpit: '1.0'\nworkspace:\n  name: test\n"): string {
+function createWorkspaceConfig(dir: string, content = "cockpit: '1.0'\nworkspace:\n  name: test\n"): string {
   const cockpitDir = join(dir, COCKPIT_DIR);
   mkdirSync(cockpitDir, { recursive: true });
-  const configPath = join(cockpitDir, CONFIG_FILE);
-  writeFileSync(configPath, content, "utf-8");
+  writeFileSync(join(cockpitDir, CONFIG_FILE), content, "utf-8");
   return dir;
+}
+
+function createProjectConfig(workspaceRoot: string, projectName: string): string {
+  const projectsDir = join(workspaceRoot, COCKPIT_DIR, PROJECTS_DIR);
+  mkdirSync(projectsDir, { recursive: true });
+  const configPath = getProjectConfigPath(workspaceRoot, projectName);
+  writeFileSync(configPath, `cockpit: '1.0'\nproject:\n  name: ${projectName}\n`, "utf-8");
+  return configPath;
 }
 
 // ─── Tests ─────────────────────────────────────────────────────────────────
 
 describe("findWorkspaceRoot", () => {
   it("finds .cockpit/config.yaml in the current directory", () => {
-    createCockpitConfig(tmpDir);
+    createWorkspaceConfig(tmpDir);
     const result = findWorkspaceRoot(tmpDir);
     expect(result).toBe(tmpDir);
   });
 
   it("finds .cockpit/config.yaml in a parent directory", () => {
-    createCockpitConfig(tmpDir);
+    createWorkspaceConfig(tmpDir);
     const nested = join(tmpDir, "sub", "deep");
     mkdirSync(nested, { recursive: true });
 
@@ -56,9 +64,9 @@ describe("findWorkspaceRoot", () => {
   });
 
   it("stops at the closest ancestor with .cockpit/", () => {
-    createCockpitConfig(tmpDir);
+    createWorkspaceConfig(tmpDir);
     const child = join(tmpDir, "child");
-    createCockpitConfig(child);
+    createWorkspaceConfig(child);
     const nested = join(child, "deep");
     mkdirSync(nested, { recursive: true });
 
@@ -68,51 +76,66 @@ describe("findWorkspaceRoot", () => {
   });
 });
 
-describe("findProjectRoot", () => {
-  it("returns current directory if .cockpit/config.yaml exists there", () => {
-    createCockpitConfig(tmpDir);
-    expect(findProjectRoot(tmpDir)).toBe(tmpDir);
-  });
-
-  it("returns null if no .cockpit/ in current directory", () => {
-    const sub = join(tmpDir, "project");
-    mkdirSync(sub, { recursive: true });
-    // .cockpit only in tmpDir, not in sub
-    createCockpitConfig(tmpDir);
-    expect(findProjectRoot(sub)).toBeNull();
-  });
-});
-
 describe("findConfigPaths", () => {
   it("returns null workspace and project when no configs exist", () => {
     const result = findConfigPaths(tmpDir);
-    // profilePath depends on whether ~/.cockpit/profile.yaml exists on the machine
     expect(result.workspacePath).toBeNull();
     expect(result.projectPath).toBeNull();
+    expect(result.workspaceRoot).toBeNull();
+    expect(result.projectName).toBeNull();
   });
 
   it("finds workspace config", () => {
-    createCockpitConfig(tmpDir);
+    createWorkspaceConfig(tmpDir);
     const result = findConfigPaths(tmpDir);
     expect(result.workspacePath).toBe(join(tmpDir, COCKPIT_DIR, CONFIG_FILE));
+    expect(result.workspaceRoot).toBe(tmpDir);
   });
 
-  it("workspace and project are the same path when cwd is workspace root", () => {
-    createCockpitConfig(tmpDir);
+  it("cwd가 workspace root이면 projectPath/projectName은 null", () => {
+    createWorkspaceConfig(tmpDir);
     const result = findConfigPaths(tmpDir);
-    // cwd IS workspace root → project path should be null (same as workspace)
     expect(result.workspacePath).not.toBeNull();
     expect(result.projectPath).toBeNull();
+    expect(result.projectName).toBeNull();
   });
 
-  it("detects separate workspace and project configs", () => {
-    createCockpitConfig(tmpDir);
+  it("workspace root 하위 cwd에서 project config를 .cockpit/projects/<name>.yaml에서 찾음", () => {
+    createWorkspaceConfig(tmpDir);
+    createProjectConfig(tmpDir, "project-a");
+
+    // cwd = workspace root / project-a
     const projectDir = join(tmpDir, "project-a");
-    createCockpitConfig(projectDir, "cockpit: '1.0'\nproject:\n  name: project-a\n");
+    mkdirSync(projectDir, { recursive: true });
 
     const result = findConfigPaths(projectDir);
     expect(result.workspacePath).toBe(join(tmpDir, COCKPIT_DIR, CONFIG_FILE));
-    expect(result.projectPath).toBe(join(projectDir, COCKPIT_DIR, CONFIG_FILE));
+    expect(result.workspaceRoot).toBe(tmpDir);
+    expect(result.projectPath).toBe(getProjectConfigPath(tmpDir, "project-a"));
+    expect(result.projectName).toBe("project-a");
+  });
+
+  it("project yaml이 없으면 하위 cwd여도 projectPath는 null", () => {
+    createWorkspaceConfig(tmpDir);
+    const projectDir = join(tmpDir, "no-config-project");
+    mkdirSync(projectDir, { recursive: true });
+
+    const result = findConfigPaths(projectDir);
+    expect(result.workspacePath).not.toBeNull();
+    expect(result.projectPath).toBeNull();
+    expect(result.projectName).toBeNull();
+  });
+
+  it("하위 디렉토리 깊이와 무관하게 첫 번째 세그먼트로 project 식별", () => {
+    createWorkspaceConfig(tmpDir);
+    createProjectConfig(tmpDir, "project-a");
+
+    const deepDir = join(tmpDir, "project-a", "src", "lib");
+    mkdirSync(deepDir, { recursive: true });
+
+    const result = findConfigPaths(deepDir);
+    expect(result.projectName).toBe("project-a");
+    expect(result.projectPath).toBe(getProjectConfigPath(tmpDir, "project-a"));
   });
 });
 
@@ -120,5 +143,12 @@ describe("getCockpitConfigPath", () => {
   it("returns expected path", () => {
     const result = getCockpitConfigPath("/some/dir");
     expect(result).toBe("/some/dir/.cockpit/config.yaml");
+  });
+});
+
+describe("getProjectConfigPath", () => {
+  it("returns expected path", () => {
+    const result = getProjectConfigPath("/dev", "abc-juice");
+    expect(result).toBe("/dev/.cockpit/projects/abc-juice.yaml");
   });
 });

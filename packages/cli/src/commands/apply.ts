@@ -5,6 +5,7 @@ import {
   findConfigPaths,
   resolveConfig,
   COCKPIT_DIR,
+  PROJECTS_DIR,
   type AdapterName,
 } from "@cockpit-ai/core";
 import { getAdapters } from "@cockpit-ai/adapters";
@@ -26,16 +27,17 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
   const paths = findConfigPaths(cwd);
 
   if (!paths.workspacePath && !paths.projectPath) {
-    // process.exit 대신 throw → watch 등 호출자에서 catch 가능
     throw new Error("No Cockpit configuration found. Run 'cockpit init' to initialize a workspace.");
   }
 
   const config = resolveConfig(paths);
 
   // verbose: 설정 파일 경로 출력
-  ui.verbose(`profile:   ${paths.profilePath ?? "(none)"}`);
-  ui.verbose(`workspace: ${paths.workspacePath ?? "(none)"}`);
-  ui.verbose(`project:   ${paths.projectPath ?? "(none)"}`);
+  ui.verbose(`profile:      ${paths.profilePath ?? "(none)"}`);
+  ui.verbose(`workspace:    ${paths.workspacePath ?? "(none)"}`);
+  ui.verbose(`project:      ${paths.projectPath ?? "(none)"}`);
+  ui.verbose(`projectName:  ${paths.projectName ?? "(none)"}`);
+  ui.verbose(`workspaceRoot:${paths.workspaceRoot ?? "(none)"}`);
 
   // Determine which adapters to target
   const targetAdapterNames: AdapterName[] = options.adapter
@@ -54,28 +56,29 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
   ui.heading("Cockpit Apply");
   ui.info(`Workspace: ${config.name}`);
+  if (paths.projectName) ui.info(`Project:   ${paths.projectName}`);
   ui.blank();
 
   // ── Load skills ──────────────────────────────────────────────────────────
 
+  const { workspaceRoot, projectName } = paths;
+
   const skillDirs = config.skills.include.map((p) => {
-    // Resolve relative paths against workspace root
     if (p.startsWith(".")) {
-      const root = paths.workspacePath
-        ? resolve(join(paths.workspacePath, "..", ".."))
-        : cwd;
+      const root = workspaceRoot ?? cwd;
       return resolve(join(root, p));
     }
     return resolve(p);
   });
 
-  // Also load from the default .cockpit/skills/ dir in workspace and project
-  const workspaceRoot = paths.workspacePath ? resolve(join(paths.workspacePath, "..", "..")) : null;
-  const projectRoot = paths.projectPath ? resolve(join(paths.projectPath, "..", "..")) : null;
-
+  // 기본 스킬 디렉토리:
+  //   - <workspaceRoot>/.cockpit/skills/          (공통)
+  //   - <workspaceRoot>/.cockpit/projects/<name>/skills/  (프로젝트별)
   const defaultDirs = [
     workspaceRoot ? join(workspaceRoot, COCKPIT_DIR, "skills") : null,
-    projectRoot ? join(projectRoot, COCKPIT_DIR, "skills") : null,
+    workspaceRoot && projectName
+      ? join(workspaceRoot, COCKPIT_DIR, PROJECTS_DIR, projectName, "skills")
+      : null,
   ].filter(Boolean) as string[];
 
   const allSkillDirs = [...new Set([...defaultDirs, ...skillDirs])];
@@ -89,7 +92,7 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
   const skills = [...registry.list(), ...getBuiltinSkills()];
 
-  // ── Build context (inline rules + external .md files + standing instruction)
+  // ── Build context ────────────────────────────────────────────────────────
 
   const contextManager = new ContextManager(cwd);
   const baseContext = contextManager.getResolved();
@@ -101,9 +104,13 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
     ],
   };
 
-  // 어댑터 파일(CLAUDE.md, .claude/skills/)을 쓸 대상 디렉토리 결정
-  // projectRoot가 있으면 프로젝트 루트, 없으면 워크스페이스 루트 사용
-  const applyTarget = projectRoot ?? workspaceRoot ?? cwd;
+  // ── Apply target 결정 ────────────────────────────────────────────────────
+  // 프로젝트가 있으면 <workspaceRoot>/<projectName>/에 어댑터 파일 작성
+  // 프로젝트 없이 workspace root에서 실행하면 workspace root에 작성
+  const applyTarget =
+    projectName && workspaceRoot
+      ? join(workspaceRoot, projectName)
+      : workspaceRoot ?? cwd;
 
   // ── Dry-run 미리보기 ─────────────────────────────────────────────────────
 
@@ -138,12 +145,10 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
         continue;
       }
 
-      // Apply context rules
       if (context.global.length > 0 || context.project.length > 0) {
         await adapter.applyContext(applyTarget, context);
       }
 
-      // Apply each skill
       for (const skill of skills) {
         await adapter.applySkill(applyTarget, skill);
       }

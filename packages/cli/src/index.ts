@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
 import { initCommand } from "./commands/init.js";
+import { projectInitCommand, projectListCommand, projectRemoveCommand } from "./commands/project.js";
 import { setupCommand } from "./commands/setup.js";
 import { statusCommand } from "./commands/status.js";
 import { applyCommand } from "./commands/apply.js";
@@ -81,11 +82,10 @@ program
 
 program
   .command("init [path]")
-  .description("Initialize a Cockpit workspace or project")
-  .option("--project", "Initialize as a project config (instead of workspace)")
-  .action(async (path: string | undefined, opts) => {
+  .description("Initialize a Cockpit workspace")
+  .action(async (path: string | undefined) => {
     try {
-      await initCommand(path, { project: opts.project as boolean | undefined });
+      await initCommand(path, {});
     } catch (err) {
       console.error("Error:", err instanceof Error ? err.message : err);
       process.exit(1);
@@ -139,6 +139,36 @@ program
       console.error("Error:", err instanceof Error ? err.message : err);
       process.exit(1);
     }
+  });
+
+// ─── project ───────────────────────────────────────────────────────────────
+
+const projectCmd = program
+  .command("project")
+  .description("Manage projects within a workspace");
+
+projectCmd
+  .command("init <name>")
+  .description("Register a project in this workspace")
+  .action(async (name: string) => {
+    try { await projectInitCommand(name); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+projectCmd
+  .command("list")
+  .description("List all configured projects")
+  .action(async () => {
+    try { await projectListCommand(); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+projectCmd
+  .command("remove <name>")
+  .description("Remove a project from this workspace")
+  .action(async (name: string) => {
+    try { await projectRemoveCommand(name); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
   });
 
 // ─── skill ─────────────────────────────────────────────────────────────────

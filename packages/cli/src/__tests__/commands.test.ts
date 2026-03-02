@@ -43,25 +43,15 @@ describe("initCommand", () => {
     expect(content).toContain("workspace:");
   });
 
-  it("creates project config when --project flag is set", async () => {
-    vi.mock("node:readline", () => ({
-      createInterface: () => ({
-        question: (_: string, cb: (ans: string) => void) => {
-          cb("my-project");
-        },
-        close: vi.fn(),
-      }),
-    }));
-
+  it("nonInteractive 모드에서 기본값으로 workspace config 생성", async () => {
     const { initCommand } = await import("../commands/init.js");
-    await initCommand(tmpDir, { project: true });
+    await initCommand(tmpDir, { nonInteractive: true });
 
     const configPath = join(tmpDir, COCKPIT_DIR, CONFIG_FILE);
     expect(existsSync(configPath)).toBe(true);
 
     const content = readFileSync(configPath, "utf-8");
-    expect(content).toContain("project:");
-    expect(content).not.toContain("workspace:");
+    expect(content).toContain("workspace:");
   });
 
   it("does not overwrite existing config", async () => {

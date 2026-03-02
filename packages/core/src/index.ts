@@ -18,13 +18,15 @@ export { loadConfig, tryLoadConfig, ConfigLoadError, ConfigValidationError } fro
 export { resolveConfig, mergeConfigs, type ResolveOptions } from "./config/resolver.js";
 export {
   findWorkspaceRoot,
-  findProjectRoot,
   findConfigPaths,
   getProfileDir,
   getProfilePath,
   getCockpitConfigPath,
+  getProjectConfigPath,
+  projectNameFromPath,
   COCKPIT_DIR,
   CONFIG_FILE,
   PROFILE_FILE,
+  PROJECTS_DIR,
   type ConfigPaths,
 } from "./config/finder.js";

@@ -40,12 +40,8 @@ export class ContextManager {
     const paths = findConfigPaths(this.cwd);
     const config = resolveConfig(paths);
 
-    // Determine the base directory for resolving file patterns
-    const basePath = paths.workspacePath
-      ? resolve(join(paths.workspacePath, "..", ".."))
-      : paths.projectPath
-      ? resolve(join(paths.projectPath, "..", ".."))
-      : this.cwd;
+    // workspace root를 base로 사용 (새 구조: .cockpit/은 workspace에만 존재)
+    const basePath = paths.workspaceRoot ?? this.cwd;
 
     // Load file-based context entries
     const fileEntries =
@@ -74,7 +70,8 @@ export class ContextManager {
       .map((e) => ({ content: e.content, scope: "project" as const, source: e.path }));
 
     // 프로젝트별 컨텍스트 파일 (.cockpit/projects/<projectName>/context/)
-    const projectName = deriveProjectName(this.cwd, basePath);
+    // projectName은 finder가 이미 계산해둔 값 사용
+    const projectName = paths.projectName;
     const perProjectEntries = projectName
       ? discoverProjectContextFiles(basePath, projectName)
       : [];
@@ -187,11 +184,7 @@ export class ContextManager {
 
     // 2. 파일 기반 컨텍스트 룰 (.cockpit/context/**/*.md)
     const config = resolveConfig(paths);
-    const basePath = paths.workspacePath
-      ? resolve(join(paths.workspacePath, "..", ".."))
-      : paths.projectPath
-      ? resolve(join(paths.projectPath, "..", ".."))
-      : this.cwd;
+    const basePath = paths.workspaceRoot ?? this.cwd;
 
     const fileEntries =
       config.context.files.length > 0
@@ -206,7 +199,7 @@ export class ContextManager {
     }
 
     // 3. 프로젝트별 컨텍스트 파일 (.cockpit/projects/<projectName>/context/)
-    const projectName = deriveProjectName(this.cwd, basePath);
+    const projectName = paths.projectName;
     if (projectName) {
       const perProjectEntries = discoverProjectContextFiles(basePath, projectName);
       for (const entry of perProjectEntries) {
