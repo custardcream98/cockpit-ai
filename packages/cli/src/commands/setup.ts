@@ -37,7 +37,7 @@ export async function setupCommand(options: SetupOptions = {}): Promise<void> {
     const spinner = ora("Initializing workspace config...").start();
     try {
       // 비대화형 init: 기본값으로 워크스페이스 설정 생성
-      await initCommand(cwd, {});
+      await initCommand(cwd, { nonInteractive: true });
       spinner.succeed("Workspace config created");
     } catch (err) {
       spinner.fail(`Init failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -66,7 +66,9 @@ export async function setupCommand(options: SetupOptions = {}): Promise<void> {
 
     for (const s of suggestions) {
       if (!existingContents.has(s.content)) {
-        manager.addRule(s.content, s.scope);
+        if (!options.dryRun) {
+          manager.addRule(s.content, s.scope);
+        }
         addedCount++;
       }
     }
@@ -79,9 +81,11 @@ export async function setupCommand(options: SetupOptions = {}): Promise<void> {
     ].filter(Boolean);
     detectedStack = stackParts.join(", ");
 
-    spinner2.succeed(
-      `Tech stack analyzed${addedCount > 0 ? ` — ${addedCount} rule${addedCount === 1 ? "" : "s"} added` : " — no new rules"}`,
-    );
+    const ruleMsg =
+      addedCount > 0
+        ? ` — ${addedCount} rule${addedCount === 1 ? "" : "s"} ${options.dryRun ? "would be added (dry-run)" : "added"}`
+        : " — no new rules";
+    spinner2.succeed(`Tech stack analyzed${ruleMsg}`);
     if (detectedStack) {
       console.log(`  ${chalk.dim("Detected:")} ${detectedStack}`);
     }

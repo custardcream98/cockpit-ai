@@ -37,6 +37,7 @@ context:
 
 export interface InitOptions {
   project?: boolean;
+  nonInteractive?: boolean;
 }
 
 export async function initCommand(targetPath: string | undefined, options: InitOptions): Promise<void> {
@@ -58,7 +59,10 @@ export async function initCommand(targetPath: string | undefined, options: InitO
   ui.blank();
 
   const defaultName = dir.split("/").at(-1) ?? "my-workspace";
-  const name = await prompt(`${kind} name`, defaultName);
+  // 비대화형 모드(setup 등)에서는 기본값을 바로 사용
+  const name = options.nonInteractive
+    ? defaultName
+    : await prompt(`${kind} name`, defaultName);
 
   mkdirSync(cockpitDir, { recursive: true });
 
