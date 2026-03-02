@@ -29,13 +29,15 @@ cockpit setup          # one-touch: init + auto-detect stack + apply to all AI t
 ## File Structure
 
 ```
-~/.cockpit/profile.yaml                         Personal global preferences & sync config
-.cockpit/config.yaml                            Workspace or project config
-.cockpit/context/conventions.md                 Global rules (auto-loaded)
-.cockpit/context/testing/vitest.md              Global rules in subdirectory
-.cockpit/projects/<name>/context/arch.md        Project-scoped rules
-.cockpit/skills/<name>.yaml                     Skill definitions
-.cockpit/agents/<name>.yaml                     Agent definitions
+~/.cockpit/profile.yaml                              Personal global preferences & sync config
+.cockpit/config.yaml                                 Workspace config
+.cockpit/projects/<name>.yaml                        Per-project config
+.cockpit/context/conventions.md                      Global rules (auto-loaded)
+.cockpit/context/testing/vitest.md                   Global rules in subdirectory
+.cockpit/projects/<name>/context/arch.md             Project-scoped rules (auto-loaded)
+.cockpit/projects/<name>/skills/<skill>.yaml         Project-scoped skills
+.cockpit/skills/<name>.yaml                          Workspace-wide skill definitions
+.cockpit/agents/<name>.yaml                          Agent definitions
 ```
 
 ## config.yaml Reference
@@ -82,11 +84,15 @@ worktree:
 
 ```
 cockpit setup                        One-touch init + analyze + apply
-cockpit init [path]                  Initialize workspace or project
+cockpit init [path]                  Initialize a workspace
 cockpit status                       Show merged config and environment
 cockpit apply                        Sync config to all AI tools
 cockpit apply --dry-run              Preview without writing files
 cockpit apply --clean                Remove cockpit-managed sections
+
+cockpit project init <name>          Register a project in the workspace
+cockpit project list                 List all configured projects
+cockpit project remove <name>        Remove a project
 
 cockpit context show                 List all active rules
 cockpit context add "<rule>"         Add a rule (--project for project scope)

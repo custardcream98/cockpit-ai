@@ -48,9 +48,11 @@ cockpit apply              # write to CLAUDE.md, .cursor/rules/, AGENTS.md…
 ## Config Hierarchy
 
 ```
-~/.cockpit/profile.yaml                      ← Personal global preferences
-/workspace/.cockpit/config.yaml             ← Workspace-level config
-/workspace/project/.cockpit/config.yaml     ← Project-level config
+~/.cockpit/profile.yaml                              ← Personal global preferences
+/workspace/.cockpit/config.yaml                     ← Workspace-level config
+/workspace/.cockpit/projects/<name>.yaml            ← Per-project config
+/workspace/.cockpit/context/*.md                    ← Global context rules (auto-loaded)
+/workspace/.cockpit/projects/<name>/context/*.md    ← Project context rules (auto-loaded)
 ```
 
 Later layers override earlier ones (deep merge). All context rules accumulate.
@@ -128,11 +130,15 @@ When you run `cockpit apply`, two skills are installed to your AI tools automati
 
 ```
 cockpit setup                          One-touch: init + analyze + apply
-cockpit init [path]                    Initialize workspace or project
+cockpit init [path]                    Initialize a workspace
 cockpit status                         Show current environment
 cockpit apply [--adapter=name]         Apply config to AI tools
 cockpit apply --dry-run                Preview changes without writing files
 cockpit apply --clean                  Remove cockpit-managed files
+
+cockpit project init <name>            Register a project in the workspace
+cockpit project list                   List all configured projects
+cockpit project remove <name>          Remove a project
 
 cockpit skill list                     List available skills
 cockpit skill add <name|path>          Add a skill
