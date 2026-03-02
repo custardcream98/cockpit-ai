@@ -98,6 +98,21 @@ describe("applyContext", () => {
     expect(content).toContain("Use TypeScript strict mode");
   });
 
+  it("프로젝트별 컨텍스트 소스 경로에 projects/ 라벨을 렌더링", async () => {
+    await adapter.applyContext(tmpDir, makeContext({
+      global: [],
+      project: [{
+        content: "Project-specific rule",
+        scope: "project",
+        source: "/dev/.cockpit/projects/workspace/context/arch.md",
+      }],
+    }));
+
+    const content = readFileSync(join(tmpDir, "CLAUDE.md"), "utf-8");
+    // .cockpit/projects/workspace/context/arch.md → "projects/workspace/context/arch.md"
+    expect(content).toContain("<!-- projects/workspace/context/arch.md -->");
+  });
+
   it("replaces previous cockpit section on re-apply", async () => {
     await adapter.applyContext(tmpDir, makeContext({
       global: [{ content: "Old rule", scope: "global" }],

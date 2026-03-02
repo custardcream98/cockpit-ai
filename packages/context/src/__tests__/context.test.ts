@@ -114,7 +114,7 @@ describe("ContextManager", () => {
       expect(resolved.project).toHaveLength(0);
     });
 
-    it("merges file-based context from .cockpit/context/ into resolved context", () => {
+    it("merges file-based context from .cockpit/context/ into resolved context (always global)", () => {
       // .cockpit/context/ 디렉토리에 파일 생성
       mkdirSync(join(tmpDir, ".cockpit", "context"), { recursive: true });
       writeFileSync(
@@ -124,6 +124,7 @@ describe("ContextManager", () => {
       );
       writeFileSync(
         join(tmpDir, ".cockpit", "context", "style.md"),
+        // frontmatter scope: project가 있어도 위치가 global을 결정
         "---\nscope: project\n---\nFollow project style guide.",
         "utf-8"
       );
@@ -131,15 +132,67 @@ describe("ContextManager", () => {
       const manager = new ContextManager(tmpDir);
       const resolved = manager.getResolved();
 
-      // 파일 기반 global 룰이 포함되어야 함
-      const fileGlobal = resolved.global.find((r) => r.content === "Use strict TypeScript.");
-      expect(fileGlobal).toBeDefined();
-      expect(fileGlobal!.scope).toBe("global");
+      // .cockpit/context/ 안의 모든 파일은 global
+      const fileConventions = resolved.global.find((r) => r.content === "Use strict TypeScript.");
+      expect(fileConventions).toBeDefined();
+      expect(fileConventions!.scope).toBe("global");
 
-      // 파일 기반 project 룰이 포함되어야 함
-      const fileProject = resolved.project.find((r) => r.content === "Follow project style guide.");
-      expect(fileProject).toBeDefined();
-      expect(fileProject!.scope).toBe("project");
+      const fileStyle = resolved.global.find((r) => r.content === "Follow project style guide.");
+      expect(fileStyle).toBeDefined();
+      expect(fileStyle!.scope).toBe("global");
+    });
+
+    it("프로젝트별 컨텍스트 파일을 project scope로 포함", () => {
+      // tmpDir/.cockpit/projects/myproject/context/ 에 파일 생성
+      mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, ".cockpit", "projects", "myproject", "context", "arch.md"),
+        "My project architecture.",
+        "utf-8"
+      );
+
+      // cwd를 tmpDir/myproject 로 설정해서 projectName = "myproject"가 도출되도록
+      const projectCwd = join(tmpDir, "myproject");
+      mkdirSync(projectCwd, { recursive: true });
+      const manager = new ContextManager(projectCwd);
+      const resolved = manager.getResolved();
+
+      const projectRule = resolved.project.find((r) => r.content === "My project architecture.");
+      expect(projectRule).toBeDefined();
+      expect(projectRule!.scope).toBe("project");
+    });
+
+    it("다른 프로젝트 파일은 포함하지 않음", () => {
+      mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
+      mkdirSync(join(tmpDir, ".cockpit", "projects", "other", "context"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, ".cockpit", "projects", "myproject", "context", "rules.md"),
+        "My project rules.",
+        "utf-8"
+      );
+      writeFileSync(
+        join(tmpDir, ".cockpit", "projects", "other", "context", "rules.md"),
+        "Other project rules.",
+        "utf-8"
+      );
+
+      const projectCwd = join(tmpDir, "myproject");
+      mkdirSync(projectCwd, { recursive: true });
+      const manager = new ContextManager(projectCwd);
+      const resolved = manager.getResolved();
+
+      const myRule = resolved.project.find((r) => r.content === "My project rules.");
+      expect(myRule).toBeDefined();
+
+      const otherRule = resolved.project.find((r) => r.content === "Other project rules.");
+      expect(otherRule).toBeUndefined();
+    });
+
+    it(".cockpit/projects/ 없을 때 기존 동작 유지", () => {
+      const manager = new ContextManager(tmpDir);
+      const resolved = manager.getResolved();
+      // project-scoped rules should be empty
+      expect(resolved.project).toHaveLength(0);
     });
   });
 
@@ -222,7 +275,7 @@ describe("ContextManager", () => {
       expect(localRules).toHaveLength(0);
     });
 
-    it("파일 기반 컨텍스트 룰을 listAll 결과에 포함한다", () => {
+    it("파일 기반 컨텍스트 룰을 listAll 결과에 포함한다 (.cockpit/context/ → 항상 global)", () => {
       // .cockpit/context/ 디렉토리에 파일 생성
       mkdirSync(join(tmpDir, ".cockpit", "context"), { recursive: true });
       writeFileSync(
@@ -231,24 +284,44 @@ describe("ContextManager", () => {
         "utf-8"
       );
       writeFileSync(
-        join(tmpDir, ".cockpit", "context", "project-rules.md"),
-        "---\nscope: project\n---\nFollow project conventions.",
+        join(tmpDir, ".cockpit", "context", "style-rules.md"),
+        // frontmatter scope: project가 있어도 위치가 global을 결정
+        "---\nscope: project\n---\nFollow style guide.",
         "utf-8"
       );
 
       const manager = new ContextManager(tmpDir);
       const all = manager.listAll();
 
-      // 파일 기반 룰이 listAll 결과에 포함되어야 함
+      // .cockpit/context/ 파일은 모두 global
       const globalFileRule = all.find((e) => e.rule.content === "Always use TypeScript.");
       expect(globalFileRule).toBeDefined();
       expect(globalFileRule!.rule.scope).toBe("global");
       expect(globalFileRule!.configFile).toContain("global-rules.md");
 
-      const projectFileRule = all.find((e) => e.rule.content === "Follow project conventions.");
-      expect(projectFileRule).toBeDefined();
-      expect(projectFileRule!.rule.scope).toBe("project");
-      expect(projectFileRule!.configFile).toContain("project-rules.md");
+      const styleRule = all.find((e) => e.rule.content === "Follow style guide.");
+      expect(styleRule).toBeDefined();
+      expect(styleRule!.rule.scope).toBe("global");
+      expect(styleRule!.configFile).toContain("style-rules.md");
+    });
+
+    it("프로젝트별 컨텍스트 파일을 listAll 결과에 포함한다", () => {
+      mkdirSync(join(tmpDir, ".cockpit", "projects", "myproject", "context"), { recursive: true });
+      writeFileSync(
+        join(tmpDir, ".cockpit", "projects", "myproject", "context", "arch.md"),
+        "My project arch.",
+        "utf-8"
+      );
+
+      const projectCwd = join(tmpDir, "myproject");
+      mkdirSync(projectCwd, { recursive: true });
+      const manager = new ContextManager(projectCwd);
+      const all = manager.listAll();
+
+      const projectRule = all.find((e) => e.rule.content === "My project arch.");
+      expect(projectRule).toBeDefined();
+      expect(projectRule!.rule.scope).toBe("project");
+      expect(projectRule!.configFile).toContain("arch.md");
     });
   });
 });

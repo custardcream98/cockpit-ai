@@ -70,14 +70,21 @@ function buildClaudeMd(existing: string | null, context: ResolvedContext): strin
 
 /**
  * Extract a display label from a rule's source path.
- * Returns the path relative to `.cockpit/context/` for file-based rules,
- * or null for inline/builtin rules.
+ * `.cockpit/context/arch.md` → `arch.md`
+ * `.cockpit/projects/workspace/context/arch.md` → `projects/workspace/context/arch.md`
+ * inline/builtin rules → null
  */
 function contextFileLabel(source: string | undefined): string | null {
   if (!source || source === "cockpit" || source === "cockpit-builtin") return null;
-  const marker = ".cockpit/context/";
-  const idx = source.indexOf(marker);
-  return idx !== -1 ? source.slice(idx + marker.length) : null;
+  // .cockpit/context/ 경로 처리 (기존 동작 유지)
+  const contextMarker = ".cockpit/context/";
+  const contextIdx = source.indexOf(contextMarker);
+  if (contextIdx !== -1) return source.slice(contextIdx + contextMarker.length);
+  // .cockpit/projects/ 경로 처리 — "projects/..." 형태로 반환
+  const cockpitMarker = ".cockpit/";
+  const cockpitIdx = source.indexOf(cockpitMarker);
+  if (cockpitIdx !== -1) return source.slice(cockpitIdx + cockpitMarker.length);
+  return null;
 }
 
 function renderRule(lines: string[], rule: { content: string; source?: string }): void {

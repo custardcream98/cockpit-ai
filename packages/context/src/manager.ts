@@ -7,7 +7,25 @@ import {
   type ContextRule,
   type ResolvedContext,
 } from "@cockpit-ai/core";
-import { discoverContextFiles, autoDiscoverContextFiles } from "./files.js";
+import { discoverContextFiles, autoDiscoverContextFiles, discoverProjectContextFiles } from "./files.js";
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * cwd가 basePath 하위에 있을 때 첫 번째 경로 세그먼트(프로젝트명)를 반환.
+ * 예: deriveProjectName("/dev/workspace/packages/core", "/dev") → "workspace"
+ * cwd === basePath 이면 null 반환.
+ */
+function deriveProjectName(cwd: string, basePath: string): string | null {
+  // 후행 슬래시 정규화
+  const normalizedCwd = cwd.replace(/\/$/, "");
+  const normalizedBase = basePath.replace(/\/$/, "");
+  const prefix = normalizedBase + "/";
+  if (!normalizedCwd.startsWith(prefix)) return null;
+  const rel = normalizedCwd.slice(prefix.length);
+  const firstSegment = rel.split("/")[0];
+  return firstSegment || null;
+}
 
 // ─── ContextManager ────────────────────────────────────────────────────────
 
@@ -55,9 +73,20 @@ export class ContextManager {
       .filter((e) => e.scope === "project")
       .map((e) => ({ content: e.content, scope: "project" as const, source: e.path }));
 
+    // 프로젝트별 컨텍스트 파일 (.cockpit/projects/<projectName>/context/)
+    const projectName = deriveProjectName(this.cwd, basePath);
+    const perProjectEntries = projectName
+      ? discoverProjectContextFiles(basePath, projectName)
+      : [];
+    const perProjectRules = perProjectEntries.map((e) => ({
+      content: e.content,
+      scope: "project" as const,
+      source: e.path,
+    }));
+
     return {
       global: [...inlineGlobal, ...fileGlobal],
-      project: [...inlineProject, ...fileProject],
+      project: [...inlineProject, ...fileProject, ...perProjectRules],
     };
   }
 
@@ -174,6 +203,18 @@ export class ContextManager {
         rule: { content: entry.content, scope: entry.scope, source: entry.path },
         configFile: entry.path,
       });
+    }
+
+    // 3. 프로젝트별 컨텍스트 파일 (.cockpit/projects/<projectName>/context/)
+    const projectName = deriveProjectName(this.cwd, basePath);
+    if (projectName) {
+      const perProjectEntries = discoverProjectContextFiles(basePath, projectName);
+      for (const entry of perProjectEntries) {
+        results.push({
+          rule: { content: entry.content, scope: entry.scope, source: entry.path },
+          configFile: entry.path,
+        });
+      }
     }
 
     return results;

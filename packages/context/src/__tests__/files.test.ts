@@ -6,6 +6,7 @@ import {
   loadContextFile,
   discoverContextFiles,
   autoDiscoverContextFiles,
+  discoverProjectContextFiles,
 } from "../files.js";
 
 let tmpDir: string;
@@ -115,7 +116,7 @@ describe("autoDiscoverContextFiles", () => {
     expect(contents).toEqual(["Root rule", "Test rule"]);
   });
 
-  it("correctly parses scope from discovered files", () => {
+  it("위치가 scope를 결정: frontmatter scope 무시하고 항상 global 반환", () => {
     writeFileSync(
       join(tmpDir, ".cockpit", "context", "global.md"),
       "Global rule",
@@ -123,6 +124,7 @@ describe("autoDiscoverContextFiles", () => {
     );
     writeFileSync(
       join(tmpDir, ".cockpit", "context", "proj.md"),
+      // frontmatter에 scope: project가 있어도 .cockpit/context/ 위치이면 global 강제
       "---\nscope: project\n---\nProject rule",
       "utf-8"
     );
@@ -130,11 +132,88 @@ describe("autoDiscoverContextFiles", () => {
     const entries = autoDiscoverContextFiles(tmpDir);
     expect(entries).toHaveLength(2);
 
-    const globalEntry = entries.find((e) => e.scope === "global");
-    const projectEntry = entries.find((e) => e.scope === "project");
+    // 위치가 scope를 결정하므로 모든 파일이 global
+    expect(entries.every((e) => e.scope === "global")).toBe(true);
+    const contents = entries.map((e) => e.content).sort();
+    expect(contents).toEqual(["Global rule", "Project rule"]);
+  });
+});
 
-    expect(globalEntry?.content).toBe("Global rule");
-    expect(projectEntry?.content).toBe("Project rule");
+// ─── discoverProjectContextFiles ──────────────────────────────────────────
+
+describe("discoverProjectContextFiles", () => {
+  it("프로젝트 context 디렉토리가 없으면 빈 배열 반환", () => {
+    const entries = discoverProjectContextFiles(tmpDir, "nonexistent");
+    expect(entries).toEqual([]);
+  });
+
+  it(".md 파일을 탐색하고 scope: project 강제", () => {
+    mkdirSync(join(tmpDir, ".cockpit", "projects", "workspace", "context"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "workspace", "context", "arch.md"),
+      "Project architecture rules",
+      "utf-8"
+    );
+
+    const entries = discoverProjectContextFiles(tmpDir, "workspace");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.content).toBe("Project architecture rules");
+    expect(entries[0]!.scope).toBe("project");
+  });
+
+  it("frontmatter scope를 무시하고 항상 project scope 반환", () => {
+    mkdirSync(join(tmpDir, ".cockpit", "projects", "myapp", "context"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "myapp", "context", "rules.md"),
+      // frontmatter에 scope: global이 있어도 위치가 project를 결정
+      "---\nscope: global\n---\nForced project rule",
+      "utf-8"
+    );
+
+    const entries = discoverProjectContextFiles(tmpDir, "myapp");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.scope).toBe("project");
+    expect(entries[0]!.content).toBe("Forced project rule");
+  });
+
+  it("서브디렉토리도 재귀적으로 탐색", () => {
+    mkdirSync(join(tmpDir, ".cockpit", "projects", "workspace", "context", "backend"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "workspace", "context", "conventions.md"),
+      "Top-level convention",
+      "utf-8"
+    );
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "workspace", "context", "backend", "api.md"),
+      "Backend API rules",
+      "utf-8"
+    );
+
+    const entries = discoverProjectContextFiles(tmpDir, "workspace");
+    expect(entries).toHaveLength(2);
+    expect(entries.every((e) => e.scope === "project")).toBe(true);
+
+    const contents = entries.map((e) => e.content).sort();
+    expect(contents).toEqual(["Backend API rules", "Top-level convention"]);
+  });
+
+  it("다른 프로젝트 파일은 포함하지 않음", () => {
+    mkdirSync(join(tmpDir, ".cockpit", "projects", "workspace", "context"), { recursive: true });
+    mkdirSync(join(tmpDir, ".cockpit", "projects", "blog", "context"), { recursive: true });
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "workspace", "context", "ws.md"),
+      "Workspace rule",
+      "utf-8"
+    );
+    writeFileSync(
+      join(tmpDir, ".cockpit", "projects", "blog", "context", "blog.md"),
+      "Blog rule",
+      "utf-8"
+    );
+
+    const entries = discoverProjectContextFiles(tmpDir, "workspace");
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.content).toBe("Workspace rule");
   });
 });
 

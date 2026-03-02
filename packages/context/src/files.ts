@@ -6,7 +6,7 @@ import { join, resolve, dirname, isAbsolute } from "node:path";
 export interface ContextFileEntry {
   /** Absolute path to the source file */
   path: string;
-  /** Parsed scope from frontmatter, defaults to "global" */
+  /** 위치로 결정되는 scope: `.cockpit/context/` → "global", `.cockpit/projects/{name}/context/` → "project" */
   scope: "global" | "project";
   /** Content with frontmatter stripped */
   content: string;
@@ -111,7 +111,9 @@ export function discoverContextFiles(basePath: string, patterns?: string[]): Con
       if (matchGlob(pattern, relPath) || matchGlob(pattern, file)) {
         seen.add(file);
         try {
-          results.push(loadContextFile(file));
+          const entry = loadContextFile(file);
+          // frontmatter scope는 무시 — 패턴 기반 탐색은 항상 global
+          results.push({ ...entry, scope: "global" as const });
         } catch {
           // Skip unreadable files
         }
@@ -125,6 +127,7 @@ export function discoverContextFiles(basePath: string, patterns?: string[]): Con
 /**
  * Auto-discover context files from `.cockpit/context/` directory
  * when no explicit patterns are configured.
+ * 위치가 scope를 결정: `.cockpit/context/` 안의 파일은 항상 global.
  */
 export function autoDiscoverContextFiles(basePath: string): ContextFileEntry[] {
   const contextDir = resolve(basePath, ".cockpit", "context");
@@ -133,7 +136,32 @@ export function autoDiscoverContextFiles(basePath: string): ContextFileEntry[] {
   const files = walkDir(contextDir).filter((f) => f.endsWith(".md"));
   return files.flatMap((f) => {
     try {
-      return [loadContextFile(f)];
+      const entry = loadContextFile(f);
+      // frontmatter scope는 무시 — 위치(`.cockpit/context/`)가 global을 결정
+      return [{ ...entry, scope: "global" as const }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+/**
+ * Discover per-project context files from `.cockpit/projects/<projectName>/context/`.
+ * 위치가 scope를 결정: 항상 project scope 강제.
+ */
+export function discoverProjectContextFiles(
+  basePath: string,
+  projectName: string,
+): ContextFileEntry[] {
+  const contextDir = resolve(basePath, ".cockpit", "projects", projectName, "context");
+  if (!existsSync(contextDir)) return [];
+
+  const files = walkDir(contextDir).filter((f) => f.endsWith(".md"));
+  return files.flatMap((f) => {
+    try {
+      const entry = loadContextFile(f);
+      // frontmatter scope는 무시 — 위치(`.cockpit/projects/`)가 project를 결정
+      return [{ ...entry, scope: "project" as const }];
     } catch {
       return [];
     }
