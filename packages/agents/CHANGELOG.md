@@ -1,5 +1,12 @@
 # @cockpit-ai/agents
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies [4962cbe]
+  - @cockpit-ai/core@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
