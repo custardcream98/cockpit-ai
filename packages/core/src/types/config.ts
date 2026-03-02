@@ -5,8 +5,8 @@ import { z } from "zod";
 const AdapterNameSchema = z.enum([
   "claude-code",
   "cursor",
-  "copilot",
   "opencode",
+  "agents-md",
 ]);
 export type AdapterName = z.infer<typeof AdapterNameSchema>;
 

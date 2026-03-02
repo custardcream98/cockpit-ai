@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createInterface } from "node:readline";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { stringify as yamlStringify } from "yaml";
 import {
   ProfileConfigSchema,
@@ -13,19 +12,7 @@ import {
   resolveConfig,
 } from "@cockpit-ai/core";
 import { ui, printKeyValue } from "../ui/output.js";
-
-// ─── Prompt Helpers ────────────────────────────────────────────────────────
-
-async function prompt(question: string, defaultValue?: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const display = defaultValue ? `${question} (${defaultValue}): ` : `${question}: `;
-  return new Promise((resolve) => {
-    rl.question(display, (answer) => {
-      rl.close();
-      resolve(answer.trim() || defaultValue || "");
-    });
-  });
-}
+import { prompt } from "../ui/prompt.js";
 
 // ─── YAML Template ────────────────────────────────────────────────────────
 
@@ -55,13 +42,14 @@ context:
 
 // ─── Git Helpers ──────────────────────────────────────────────────────────
 
-function runGit(args: string, cwd: string): string {
-  return execSync(`git ${args}`, { cwd, stdio: "pipe" }).toString().trim();
+// 배열 방식으로 커맨드 인젝션 방지
+function runGit(args: string[], cwd: string): string {
+  return execFileSync("git", args, { cwd, stdio: "pipe" }).toString().trim();
 }
 
 function isGitRepo(dir: string): boolean {
   try {
-    runGit("rev-parse --is-inside-work-tree", dir);
+    runGit(["rev-parse", "--is-inside-work-tree"], dir);
     return true;
   } catch {
     return false;
@@ -70,7 +58,7 @@ function isGitRepo(dir: string): boolean {
 
 function hasCommits(dir: string): boolean {
   try {
-    runGit("rev-parse HEAD", dir);
+    runGit(["rev-parse", "HEAD"], dir);
     return true;
   } catch {
     return false;
@@ -79,7 +67,7 @@ function hasCommits(dir: string): boolean {
 
 function hasRemote(dir: string): boolean {
   try {
-    const remotes = runGit("remote", dir);
+    const remotes = runGit(["remote"], dir);
     return remotes.trim().length > 0;
   } catch {
     return false;
@@ -149,10 +137,10 @@ export async function profileShowCommand(): Promise<void> {
     if (isGitRepo(profileDirResolved)) {
       printKeyValue("Git repo", "yes");
       try {
-        const branch = runGit("rev-parse --abbrev-ref HEAD", profileDirResolved);
+        const branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], profileDirResolved);
         printKeyValue("Branch", branch);
         if (hasRemote(profileDirResolved)) {
-          const remote = runGit("remote get-url origin", profileDirResolved);
+          const remote = runGit(["remote", "get-url", "origin"], profileDirResolved);
           printKeyValue("Remote origin", remote);
         } else {
           printKeyValue("Remote origin", "(none)");
@@ -194,11 +182,11 @@ export async function profileCreateCommand(): Promise<void> {
   const language = await prompt("Preferred language code (e.g. en, ko, ja)", "en");
   const defaultModel = await prompt("Default AI model", "claude-sonnet-4-6");
   const defaultAdapter = await prompt(
-    "Default adapter (claude-code, cursor, copilot, opencode)",
+    "Default adapter (claude-code, cursor, opencode, agents-md)",
     "claude-code"
   );
 
-  const validAdapters = ["claude-code", "cursor", "copilot", "opencode"];
+  const validAdapters = ["claude-code", "cursor", "opencode", "agents-md"];
   if (!validAdapters.includes(defaultAdapter)) {
     ui.error(`Invalid adapter '${defaultAdapter}'. Must be one of: ${validAdapters.join(", ")}`);
     process.exit(1);
@@ -242,7 +230,7 @@ export async function profileSyncPushCommand(): Promise<void> {
   if (!isGitRepo(profileDir)) {
     ui.info("Initializing git repository in profile directory...");
     try {
-      runGit("init", profileDir);
+      runGit(["init"], profileDir);
       ui.success("Git repository initialized.");
     } catch (err) {
       ui.error(`Failed to initialize git repo: ${err instanceof Error ? err.message : String(err)}`);
@@ -253,9 +241,9 @@ export async function profileSyncPushCommand(): Promise<void> {
   // Add remote if configured but not yet set
   if (remote && remote.trim() !== "") {
     try {
-      const existingRemotes = runGit("remote", profileDir);
+      const existingRemotes = runGit(["remote"], profileDir);
       if (!existingRemotes.split("\n").includes("origin")) {
-        runGit(`remote add origin ${remote}`, profileDir);
+        runGit(["remote", "add", "origin", remote], profileDir);
         ui.success(`Remote 'origin' set to: ${remote}`);
       }
     } catch (err) {
@@ -265,7 +253,7 @@ export async function profileSyncPushCommand(): Promise<void> {
 
   // Stage all files
   try {
-    runGit("add .", profileDir);
+    runGit(["add", "."], profileDir);
   } catch (err) {
     ui.error(`Failed to stage files: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
@@ -274,7 +262,7 @@ export async function profileSyncPushCommand(): Promise<void> {
   // Check if there is anything to commit
   let hasChanges = false;
   try {
-    const status = runGit("status --porcelain", profileDir);
+    const status = runGit(["status", "--porcelain"], profileDir);
     hasChanges = status.trim().length > 0;
   } catch {
     hasChanges = true; // Assume there are changes if we can't check
@@ -282,7 +270,7 @@ export async function profileSyncPushCommand(): Promise<void> {
 
   if (hasChanges || !hasCommits(profileDir)) {
     try {
-      runGit(`commit -m "sync"`, profileDir);
+      runGit(["commit", "-m", "sync"], profileDir);
       ui.success("Committed profile changes.");
     } catch (err) {
       // Commit may fail if nothing to commit (e.g., after a clean add)
@@ -305,11 +293,11 @@ export async function profileSyncPushCommand(): Promise<void> {
       // Determine current branch name
       let branch = "main";
       try {
-        branch = runGit("rev-parse --abbrev-ref HEAD", profileDir);
+        branch = runGit(["rev-parse", "--abbrev-ref", "HEAD"], profileDir);
       } catch {
         // Fallback to "main"
       }
-      runGit(`push -u origin ${branch}`, profileDir);
+      runGit(["push", "-u", "origin", branch], profileDir);
       ui.success("Profile pushed to remote.");
     } catch (err) {
       ui.error(`Push failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -345,7 +333,7 @@ export async function profileSyncPullCommand(): Promise<void> {
         const parentDir = resolve(profileDir, "..");
         const dirName = profileDir.split("/").at(-1) ?? ".cockpit";
         mkdirSync(parentDir, { recursive: true });
-        execSync(`git clone ${remote} ${dirName}`, { cwd: parentDir, stdio: "pipe" });
+        execFileSync("git", ["clone", remote, dirName], { cwd: parentDir, stdio: "pipe" });
         ui.success("Profile cloned from remote.");
       } catch (err) {
         ui.error(`Clone failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -364,7 +352,7 @@ export async function profileSyncPullCommand(): Promise<void> {
       if (remote && remote.trim() !== "") {
         ui.info("Adding remote from profile config...");
         try {
-          runGit(`remote add origin ${remote}`, profileDir);
+          runGit(["remote", "add", "origin", remote], profileDir);
           ui.success(`Remote 'origin' set to: ${remote}`);
         } catch (err) {
           ui.error(`Failed to add remote: ${err instanceof Error ? err.message : String(err)}`);
@@ -378,7 +366,7 @@ export async function profileSyncPullCommand(): Promise<void> {
 
     ui.info("Pulling latest changes from remote...");
     try {
-      runGit("pull", profileDir);
+      runGit(["pull"], profileDir);
       ui.success("Profile updated from remote.");
     } catch (err) {
       ui.error(`Pull failed: ${err instanceof Error ? err.message : String(err)}`);

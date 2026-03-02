@@ -28,7 +28,36 @@ export type AgentDefinition = z.infer<typeof AgentDefinitionSchema>;
 
 // ─── Agent State ───────────────────────────────────────────────────────────
 
-export type AgentStatus = "idle" | "running" | "stopped" | "error";
+export type AgentStatus = "idle" | "spawning" | "running" | "stopped" | "error" | "completed";
+
+// ─── Agent Run ─────────────────────────────────────────────────────────────
+
+export interface AgentRunConfig {
+  model?: string;
+  maxTurns?: number;
+  /** Claude Code 권한 모드 */
+  permissionMode?: "default" | "acceptEdits" | "bypassPermissions";
+  cwd?: string;
+  env?: Record<string, string>;
+  allowedTools?: string[];
+}
+
+export interface AgentRun {
+  runId: string;
+  agentName: string;
+  status: AgentStatus;
+  startedAt: string;
+  stoppedAt?: string;
+  /** Claude Code session ID (stream-json 출력에서 추출) */
+  sessionId?: string;
+  task?: string;
+  result?: string;
+  error?: string;
+  config: AgentRunConfig;
+  pid?: number;
+  /** worktree 자동 생성 시 경로 */
+  worktreePath?: string;
+}
 
 export interface ResolvedAgent {
   name: string;

@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
 import { initCommand } from "./commands/init.js";
+import { setupCommand } from "./commands/setup.js";
 import { statusCommand } from "./commands/status.js";
 import { applyCommand } from "./commands/apply.js";
 import { watchCommand } from "./commands/watch.js";
@@ -25,6 +26,7 @@ import {
   agentSpawnCommand,
   agentStopCommand,
   agentStatusCommand,
+  agentLogsCommand,
 } from "./commands/agent.js";
 import {
   worktreeCreateCommand,
@@ -36,7 +38,11 @@ import {
 import {
   contextShowCommand,
   contextAddCommand,
+  contextRemoveCommand,
   contextGenerateCommand,
+  contextAnalyzeCommand,
+  contextLintCommand,
+  contextStatsCommand,
 } from "./commands/context.js";
 
 const program = new Command();
@@ -44,7 +50,32 @@ const program = new Command();
 program
   .name("cockpit")
   .description("AI-first Development Environment Orchestrator")
-  .version(version);
+  .version(version)
+  .option("--verbose", "Show detailed debug information (config paths, adapter detection, etc.)")
+  .hook("preAction", (thisCommand) => {
+    if (thisCommand.opts()["verbose"]) {
+      process.env["COCKPIT_VERBOSE"] = "1";
+    }
+  });
+
+// ─── setup ─────────────────────────────────────────────────────────────────
+
+program
+  .command("setup")
+  .description("One-touch setup: init + detect tech stack + apply to AI tools")
+  .option("--adapter <name>", "Apply only to a specific adapter")
+  .option("--dry-run", "Preview without writing any files")
+  .action(async (opts) => {
+    try {
+      await setupCommand({
+        adapter: opts.adapter as string | undefined,
+        dryRun: opts.dryRun as boolean | undefined,
+      });
+    } catch (err) {
+      console.error("Error:", err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
+  });
 
 // ─── init ──────────────────────────────────────────────────────────────────
 
@@ -82,11 +113,13 @@ program
   .description("Apply Cockpit config to AI tools in the current project")
   .option("--adapter <name>", "Apply only to a specific adapter")
   .option("--clean", "Remove cockpit-managed files instead of applying")
+  .option("--dry-run", "Preview changes without writing any files")
   .action(async (opts) => {
     try {
       await applyCommand({
         adapter: opts.adapter as string | undefined,
         clean: opts.clean as boolean | undefined,
+        dryRun: opts.dryRun as boolean | undefined,
       });
     } catch (err) {
       console.error("Error:", err instanceof Error ? err.message : err);
@@ -219,18 +252,31 @@ agentCmd
   });
 
 agentCmd
-  .command("spawn <name>")
-  .description("Spawn an agent")
-  .action(async (name: string) => {
-    try { await agentSpawnCommand(name); }
+  .command("spawn <name> <task>")
+  .description("Spawn an agent to execute a task")
+  .option("--model <model>", "Override model for this run")
+  .option("--max-turns <n>", "Maximum conversation turns", parseInt)
+  .option("--worktree", "Create a worktree for this agent run")
+  .option("--cleanup", "Delete worktree after agent completes")
+  .option("--dry-run", "Preview spawn config without starting the process")
+  .action(async (name: string, task: string, opts) => {
+    try {
+      await agentSpawnCommand(name, task, {
+        model: opts.model as string | undefined,
+        maxTurns: opts.maxTurns as number | undefined,
+        worktree: opts.worktree as boolean | undefined,
+        cleanup: opts.cleanup as boolean | undefined,
+        dryRun: opts.dryRun as boolean | undefined,
+      });
+    }
     catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
   });
 
 agentCmd
-  .command("stop <name>")
-  .description("Stop a running agent")
-  .action(async (name: string) => {
-    try { await agentStopCommand(name); }
+  .command("stop <runId>")
+  .description("Stop a running agent by runId")
+  .action(async (runId: string) => {
+    try { await agentStopCommand(runId); }
     catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
   });
 
@@ -239,6 +285,14 @@ agentCmd
   .description("Show agent status dashboard")
   .action(async () => {
     try { await agentStatusCommand(); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+agentCmd
+  .command("logs <runId>")
+  .description("Show logs for a specific agent run")
+  .action(async (runId: string) => {
+    try { await agentLogsCommand(runId); }
     catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
   });
 
@@ -320,10 +374,43 @@ contextCmd
   });
 
 contextCmd
+  .command("remove <rule>")
+  .description("Remove a context rule by exact content match")
+  .action(async (rule: string) => {
+    try { await contextRemoveCommand(rule); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+contextCmd
   .command("generate")
   .description("Generate adapter context files (CLAUDE.md etc.)")
   .action(async () => {
     try { await contextGenerateCommand(); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+contextCmd
+  .command("analyze")
+  .description("Analyze project tech stack and suggest context rules")
+  .option("--apply", "Automatically add suggested rules to config")
+  .action(async (opts) => {
+    try { await contextAnalyzeCommand({ apply: opts.apply as boolean | undefined }); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+contextCmd
+  .command("lint")
+  .description("Check for stale or conflicting context rules")
+  .action(async () => {
+    try { await contextLintCommand(); }
+    catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
+  });
+
+contextCmd
+  .command("stats")
+  .description("Show token cost breakdown per context rule")
+  .action(async () => {
+    try { await contextStatsCommand(); }
     catch (err) { console.error("Error:", err instanceof Error ? err.message : err); process.exit(1); }
   });
 

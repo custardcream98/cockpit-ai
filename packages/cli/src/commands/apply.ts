@@ -1,5 +1,6 @@
 import { resolve, join } from "node:path";
 import ora from "ora";
+import chalk from "chalk";
 import {
   findConfigPaths,
   resolveConfig,
@@ -17,6 +18,7 @@ import { ui } from "../ui/output.js";
 export interface ApplyOptions {
   adapter?: string;
   clean?: boolean;
+  dryRun?: boolean;
 }
 
 export async function applyCommand(options: ApplyOptions): Promise<void> {
@@ -30,12 +32,19 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
   const config = resolveConfig(paths);
 
+  // verbose: 설정 파일 경로 출력
+  ui.verbose(`profile:   ${paths.profilePath ?? "(none)"}`);
+  ui.verbose(`workspace: ${paths.workspacePath ?? "(none)"}`);
+  ui.verbose(`project:   ${paths.projectPath ?? "(none)"}`);
+
   // Determine which adapters to target
   const targetAdapterNames: AdapterName[] = options.adapter
     ? [options.adapter as AdapterName]
     : config.adapters;
 
   const adapters = getAdapters(targetAdapterNames);
+
+  ui.verbose(`adapters: ${targetAdapterNames.join(", ")} (resolved: ${adapters.map((a) => a.name).join(", ")})`);
 
   if (adapters.length === 0) {
     ui.warn("No supported adapters found.");
@@ -95,6 +104,27 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
   // 어댑터 파일(CLAUDE.md, .claude/skills/)을 쓸 대상 디렉토리 결정
   // projectRoot가 있으면 프로젝트 루트, 없으면 워크스페이스 루트 사용
   const applyTarget = projectRoot ?? workspaceRoot ?? cwd;
+
+  // ── Dry-run 미리보기 ─────────────────────────────────────────────────────
+
+  if (options.dryRun) {
+    ui.info("Dry run — no files will be written.");
+    ui.blank();
+    for (const adapter of adapters) {
+      console.log(`  ${chalk.cyan(adapter.name)}`);
+      if (options.clean) {
+        console.log(`    ${chalk.dim("action:")} clean (remove cockpit-managed files)`);
+      } else {
+        const ruleCount = context.global.length + context.project.length;
+        const skillCount = skills.length;
+        if (ruleCount > 0) console.log(`    ${chalk.dim("context:")} ${ruleCount} rules`);
+        if (skillCount > 0) console.log(`    ${chalk.dim("skills:")}  ${skillCount}`);
+        console.log(`    ${chalk.dim("target:")}  ${applyTarget}`);
+      }
+    }
+    ui.blank();
+    return;
+  }
 
   // ── Apply to each adapter ────────────────────────────────────────────────
 

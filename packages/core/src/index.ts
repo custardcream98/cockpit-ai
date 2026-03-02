@@ -5,7 +5,7 @@ export { ProfileConfigSchema, WorkspaceConfigSchema, ProjectConfigSchema } from 
 export type { SkillDefinition, ResolvedSkill } from "./types/skill.js";
 export { SkillDefinitionSchema } from "./types/skill.js";
 
-export type { AgentDefinition, ResolvedAgent, AgentStatus } from "./types/agent.js";
+export type { AgentDefinition, ResolvedAgent, AgentStatus, AgentRunConfig, AgentRun } from "./types/agent.js";
 export { AgentDefinitionSchema } from "./types/agent.js";
 
 export type { CockpitAdapter } from "./types/adapter.js";

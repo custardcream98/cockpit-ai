@@ -10,11 +10,12 @@
 
 ## What is Cockpit?
 
-When you work with AI coding tools (Claude Code, Cursor, GitHub Copilot, OpenCode, etc.), each tool has its own configuration format and location:
+When you work with AI coding tools (Claude Code, Cursor, OpenCode, etc.), each tool has its own configuration format and location:
 
 - Claude Code → `.claude/skills/<name>/SKILL.md`, `CLAUDE.md`
 - Cursor → `.cursor/rules/*.mdc`
-- GitHub Copilot → `.github/copilot-instructions.md`
+- OpenCode → `.opencode/instructions.md`
+- Any tool → `AGENTS.md` (Linux Foundation standard)
 
 Cockpit is a **portable, composable workspace orchestrator** that lets you define skills, context rules, and agent configs once — and automatically translates them into each tool's native format.
 
@@ -22,9 +23,9 @@ Cockpit is a **portable, composable workspace orchestrator** that lets you defin
 
 | Value | Description |
 |-------|-------------|
-| **Write Once, Apply Anywhere** | One skill/agent definition → auto-converted for Claude Code, Cursor, Copilot, etc. |
+| **Write Once, Apply Anywhere** | One skill/agent definition → auto-converted for Claude Code, Cursor, OpenCode, AGENTS.md, etc. |
 | **Portable Profile** | Sync your AI development environment via git. Same setup everywhere. |
-| **Orchestration** | Manage multiple repos, worktrees, and agents from one place. |
+| **Orchestration** | Spawn real agent processes, manage worktrees, and coordinate multi-agent workflows. |
 
 ## Quick Start
 
@@ -32,17 +33,16 @@ Cockpit is a **portable, composable workspace orchestrator** that lets you defin
 # Install
 npm install -g @cockpit-ai/cli
 
-# Initialize a workspace
-cockpit init /path/to/workspace
+# One-touch setup: init + auto-detect stack + apply to all AI tools
+cockpit setup
+```
 
-# Initialize a project inside it
-cockpit init /path/to/workspace/my-project --project
+Or step by step:
 
-# View current environment
-cockpit status
-
-# Apply config to AI tools
-cockpit apply
+```bash
+cockpit init               # create .cockpit/config.yaml
+cockpit context analyze --apply  # detect tech stack, add rules
+cockpit apply              # write to CLAUDE.md, .cursor/rules/, AGENTS.md…
 ```
 
 ## Config Hierarchy
@@ -67,6 +67,7 @@ workspace:
 adapters:
   - claude-code
   - cursor
+  - agents-md
 
 context:
   global:
@@ -78,16 +79,13 @@ context:
 
 ## Context Files
 
-Place markdown files in `.cockpit/context/` — they are loaded automatically:
+Place markdown files in `.cockpit/context/` — they are loaded automatically as global rules. Files in `.cockpit/projects/<name>/context/` are loaded as project-scoped rules.
 
 ```markdown
----
-scope: project
----
 Use vitest for all testing. Never use Jest.
 ```
 
-Frontmatter `scope` can be `global` (default) or `project`.
+Scope is determined by **directory location**, not frontmatter. Frontmatter is stripped from content.
 
 ## Skill Definition
 
@@ -113,27 +111,54 @@ adapters:
     type: rule     # → .cursor/rules/code-review.mdc
 ```
 
+## Built-in Skills
+
+When you run `cockpit apply`, two skills are installed to your AI tools automatically:
+
+| Trigger | Description |
+|---------|-------------|
+| `/cockpit-context-update` | Analyze project and update `.cockpit/context/` files |
+| `/cockpit-setup` | Set up Cockpit in any project — guided walkthrough |
+
+## LLM Reference
+
+[`llms.txt`](./llms.txt) — machine-readable reference for LLMs (config schema, CLI commands, file structure).
+
 ## CLI Commands
 
 ```
-cockpit init [path]               Initialize workspace or project
-cockpit status                    Show current environment
-cockpit apply [--adapter=name]    Apply config to AI tools
+cockpit setup                          One-touch: init + analyze + apply
+cockpit init [path]                    Initialize workspace or project
+cockpit status                         Show current environment
+cockpit apply [--adapter=name]         Apply config to AI tools
+cockpit apply --dry-run                Preview changes without writing files
+cockpit apply --clean                  Remove cockpit-managed files
 
-cockpit skill list                List available skills
-cockpit skill add <name|path>     Add a skill
-cockpit skill create <name>       Create a skill from template
-cockpit skill remove <name>       Remove a skill
+cockpit skill list                     List available skills
+cockpit skill add <name|path>          Add a skill
+cockpit skill create <name>            Create a skill from template
+cockpit skill remove <name>            Remove a skill
 
-cockpit agent list                List agents
-cockpit agent spawn <name>        Start an agent
-cockpit agent status              Agent dashboard
+cockpit context show                   Show current context rules
+cockpit context add <rule> [--project] Add a context rule
+cockpit context remove <rule>          Remove a context rule
+cockpit context generate               Write context to CLAUDE.md etc.
+cockpit context analyze [--apply]      Detect tech stack and suggest rules
+cockpit context lint                   Check for stale/conflicting rules
+cockpit context stats                  Show token cost per rule
 
-cockpit profile sync push         Push profile to remote
-cockpit profile sync pull         Pull profile from remote
+cockpit agent list                     List agents
+cockpit agent spawn <name> "<task>"    Spawn an agent to run a task
+cockpit agent stop <runId>             Stop a running agent
+cockpit agent status                   Agent run dashboard
+cockpit agent logs <runId>             Show logs for a run
 
-cockpit worktree create <branch>  Create a worktree
-cockpit worktree assign <wt> <agent>  Assign agent to worktree
+cockpit profile sync push              Push profile to remote
+cockpit profile sync pull              Pull profile from remote
+
+cockpit worktree create <branch>       Create a worktree
+cockpit worktree assign <wt> <agent>   Assign agent to worktree
+cockpit worktree clean                 Clean up stale worktrees
 ```
 
 ## Tech Stack
@@ -149,18 +174,25 @@ cockpit worktree assign <wt> <agent>  Assign agent to worktree
 | Build | tsup |
 | Test | vitest |
 
-## Project Status
+## Supported Adapters
 
-All phases complete. ✅
+| Adapter | Config Written | Notes |
+|---------|---------------|-------|
+| `claude-code` | `CLAUDE.md`, `.claude/skills/` | Claude Code native format |
+| `cursor` | `.cursor/rules/*.mdc` | Cursor native format |
+| `opencode` | `.opencode/instructions.md` | OpenCode native format |
+| `agents-md` | `AGENTS.md` | Linux Foundation emerging standard |
+
+## Project Status
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| 1 — Foundation | ✅ Complete | Monorepo, config system, `init`/`status` commands |
-| 2 — Skills & Adapters | ✅ Complete | Claude Code, Cursor, OpenCode adapters; skill CRUD |
-| 3 — Profile & Sync | ✅ Complete | Git-based profile sync |
-| 4 — Agents | ✅ Complete | Agent spawn/track |
-| 5 — Worktree | ✅ Complete | Multi-repo worktree orchestration |
-| 6 — Context | ✅ Complete | Rule-based context injection, external file support |
+| Foundation | ✅ | Monorepo, config system, `init`/`status` |
+| Skills & Adapters | ✅ | Claude Code, Cursor, OpenCode, AGENTS.md adapters |
+| Profile & Sync | ✅ | Git-based profile sync |
+| Agent Orchestration | ✅ | Real process spawn via Claude Code CLI, worktree integration |
+| Context Intelligence | ✅ | Tech stack analysis, rule auto-generation, staleness detection |
+| DX & Polish | ✅ | `--dry-run`, `--verbose`, `context lint/stats/analyze` |
 
 ## Contributing
 

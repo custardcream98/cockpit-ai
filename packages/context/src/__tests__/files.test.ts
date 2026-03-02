@@ -33,7 +33,7 @@ describe("loadContextFile", () => {
     expect(entry.path).toBe(filePath);
   });
 
-  it("parses frontmatter scope: project", () => {
+  it("frontmatter scope 필드를 무시하고 항상 global scope 반환", () => {
     const filePath = join(tmpDir, ".cockpit", "context", "project.md");
     writeFileSync(
       filePath,
@@ -42,7 +42,8 @@ describe("loadContextFile", () => {
     );
 
     const entry = loadContextFile(filePath);
-    expect(entry.scope).toBe("project");
+    // 위치(디렉토리)가 scope를 결정하므로 frontmatter의 scope: project는 무시됨
+    expect(entry.scope).toBe("global");
     expect(entry.content).toBe("Follow project conventions.");
   });
 

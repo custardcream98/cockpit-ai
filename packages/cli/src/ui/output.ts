@@ -10,6 +10,12 @@ export const ui = {
   dim: (msg: string) => console.log(chalk.dim(msg)),
   heading: (msg: string) => console.log("\n" + chalk.bold(msg)),
   blank: () => console.log(),
+  /** --verbose 플래그가 설정된 경우에만 출력 */
+  verbose: (msg: string) => {
+    if (process.env["COCKPIT_VERBOSE"] === "1") {
+      console.log(chalk.magenta("[verbose]") + " " + chalk.dim(msg));
+    }
+  },
 };
 
 export function formatKey(key: string): string {

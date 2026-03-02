@@ -1,21 +1,8 @@
 import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { createInterface } from "node:readline";
 import { COCKPIT_DIR, CONFIG_FILE } from "@cockpit-ai/core";
 import { ui } from "../ui/output.js";
-
-// ─── Prompt Helpers ────────────────────────────────────────────────────────
-
-async function prompt(question: string, defaultValue?: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  const display = defaultValue ? `${question} (${defaultValue}): ` : `${question}: `;
-  return new Promise((resolve) => {
-    rl.question(display, (answer) => {
-      rl.close();
-      resolve(answer.trim() || defaultValue || "");
-    });
-  });
-}
+import { prompt } from "../ui/prompt.js";
 
 // ─── Template Generators ───────────────────────────────────────────────────
 

@@ -105,13 +105,13 @@ describe("mergeConfigs", () => {
     };
     const project: ProjectConfig = {
       cockpit: "1.0",
-      adapters: ["cursor", "copilot"],
+      adapters: ["cursor", "opencode"],
     };
 
     const result = mergeConfigs(paths, null, workspace, project);
     expect(result.adapters).toContain("claude-code");
     expect(result.adapters).toContain("cursor");
-    expect(result.adapters).toContain("copilot");
+    expect(result.adapters).toContain("opencode");
     expect(result.adapters.filter((a) => a === "cursor")).toHaveLength(1);
   });
 

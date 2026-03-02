@@ -14,23 +14,13 @@ export interface ContextFileEntry {
 
 // ─── Frontmatter Parser ──────────────────────────────────────────────────
 
-const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
+const FRONTMATTER_RE = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/;
 
-function parseFrontmatter(raw: string): { scope: "global" | "project"; body: string } {
+// scope는 디렉토리 위치로만 결정되므로 frontmatter는 body 추출에만 사용
+function parseFrontmatter(raw: string): string {
   const match = FRONTMATTER_RE.exec(raw);
-  if (!match) {
-    return { scope: "global", body: raw };
-  }
-
-  const fm = match[1] ?? "";
-  const body = raw.slice(match[0].length);
-
-  // Simple key: value extraction — only need "scope"
-  const scopeMatch = /^scope\s*:\s*(.+)$/m.exec(fm);
-  const scopeRaw = scopeMatch?.[1]?.trim().toLowerCase();
-  const scope: "global" | "project" = scopeRaw === "project" ? "project" : "global";
-
-  return { scope, body };
+  if (!match) return raw;
+  return raw.slice(match[0].length);
 }
 
 // ─── File Loader ─────────────────────────────────────────────────────────
@@ -40,8 +30,9 @@ function parseFrontmatter(raw: string): { scope: "global" | "project"; body: str
  */
 export function loadContextFile(filePath: string): ContextFileEntry {
   const raw = readFileSync(filePath, "utf-8");
-  const { scope, body } = parseFrontmatter(raw);
-  return { path: filePath, scope, content: body.trim() };
+  const body = parseFrontmatter(raw);
+  // scope는 호출자가 디렉토리 위치에 따라 결정 (global이 기본값)
+  return { path: filePath, scope: "global", content: body.trim() };
 }
 
 // ─── Simple Glob ─────────────────────────────────────────────────────────

@@ -1,0 +1,161 @@
+# Cockpit AI
+
+> AI-first Development Environment Orchestrator
+> Write Once, Apply Anywhere — one config synced to Claude Code, Cursor, OpenCode, AGENTS.md, and more.
+
+## Quick Start
+
+```bash
+npm install -g @cockpit-ai/cli
+cockpit setup          # one-touch: init + auto-detect stack + apply to all AI tools
+```
+
+## Core Concepts
+
+**Workspace** — a directory containing `.cockpit/config.yaml`. Represents a project or monorepo root.
+
+**Context rules** — plain-text instructions injected into AI tool config files (CLAUDE.md, .cursor/rules/, AGENTS.md etc.). Defined inline in config.yaml or as `.md` files in `.cockpit/context/`.
+
+**Scope** — determined by *directory location*, not frontmatter:
+- `.cockpit/context/*.md` → **global** (applies to all projects)
+- `.cockpit/projects/<name>/context/*.md` → **project** (applies to one project)
+
+**Skills** — reusable prompt fragments that become Claude Code slash commands, Cursor rules, etc.
+
+**Adapters** — translators: `claude-code`, `cursor`, `opencode`, `agents-md`.
+
+**Agents** — autonomous processes launched via `cockpit agent spawn`. Each agent runs Claude Code CLI as a subprocess with a task description.
+
+## File Structure
+
+```
+~/.cockpit/profile.yaml                         Personal global preferences & sync config
+.cockpit/config.yaml                            Workspace or project config
+.cockpit/context/conventions.md                 Global rules (auto-loaded)
+.cockpit/context/testing/vitest.md              Global rules in subdirectory
+.cockpit/projects/<name>/context/arch.md        Project-scoped rules
+.cockpit/skills/<name>.yaml                     Skill definitions
+.cockpit/agents/<name>.yaml                     Agent definitions
+```
+
+## config.yaml Reference
+
+```yaml
+cockpit: "1.0"
+
+workspace:
+  name: my-workspace
+  default_adapter: claude-code
+
+adapters:
+  - claude-code      # writes CLAUDE.md + .claude/skills/
+  - cursor           # writes .cursor/rules/
+  - opencode         # writes .opencode/instructions.md
+  - agents-md        # writes AGENTS.md
+
+context:
+  global:
+    - "Use TypeScript strict mode"
+    - "Prefer functional patterns"
+  files:
+    - ".cockpit/context/**/*.md"
+
+skills:
+  include: []        # paths to custom skill dirs
+```
+
+## Agent Definition Example
+
+```yaml
+name: code-reviewer
+role: Reviews code for bugs, performance, and style
+model: claude-sonnet-4-6
+skills: [code-review]
+context_includes:
+  - conventions
+worktree:
+  auto_create: true
+  branch_prefix: "review/"
+```
+
+## Essential CLI Commands
+
+```
+cockpit setup                        One-touch init + analyze + apply
+cockpit init [path]                  Initialize workspace or project
+cockpit status                       Show merged config and environment
+cockpit apply                        Sync config to all AI tools
+cockpit apply --dry-run              Preview without writing files
+cockpit apply --clean                Remove cockpit-managed sections
+
+cockpit context show                 List all active rules
+cockpit context add "<rule>"         Add a rule (--project for project scope)
+cockpit context remove "<rule>"      Remove a rule
+cockpit context generate             Write rules to CLAUDE.md etc.
+cockpit context analyze [--apply]    Auto-detect tech stack and suggest rules
+cockpit context lint                 Find stale or conflicting rules
+cockpit context stats                Token cost per rule
+
+cockpit agent spawn <name> "<task>"  Spawn an agent subprocess
+cockpit agent stop <runId>           Kill a running agent
+cockpit agent status                 Dashboard of all runs
+cockpit agent logs <runId>           Show output for a run
+
+cockpit worktree create <branch>     Create a git worktree
+cockpit worktree clean               Prune stale worktrees
+
+cockpit profile create               Set up personal profile
+cockpit profile sync push/pull       Git-sync profile across machines
+```
+
+## Context File Format
+
+Context files are plain markdown. Frontmatter is stripped; scope is location-based.
+
+```markdown
+# Testing Conventions
+
+Use Vitest for all tests. Import from `vitest`, not `@jest/*`.
+Prefer `vi.fn()` over `jest.fn()`. Use `vi.mock()` for module mocking.
+```
+
+## Skill Definition Format
+
+```yaml
+name: code-review
+version: 1.0.0
+description: Review code for bugs, performance, and security
+trigger:
+  - "/review"
+prompt: |
+  Review the provided code for:
+  - Logic errors and edge cases
+  - Performance bottlenecks
+  - Security vulnerabilities
+adapters:
+  claude-code:
+    type: skill      # → .claude/skills/code-review/SKILL.md
+  cursor:
+    type: rule       # → .cursor/rules/code-review.mdc
+```
+
+## Built-in Skills (always applied)
+
+- `/cockpit-context-update` — Analyze project and update `.cockpit/context/` files
+- `/cockpit-setup` — Set up Cockpit in any project interactively
+
+## Architecture (for contributors)
+
+Monorepo with pnpm + Turborepo. Packages:
+
+| Package | Role |
+|---------|------|
+| `@cockpit-ai/core` | Types, config schema (Zod), config discovery/resolution |
+| `@cockpit-ai/cli` | Commander.js CLI, all user-facing commands |
+| `@cockpit-ai/adapters` | Claude Code, Cursor, OpenCode, AGENTS.md adapter implementations |
+| `@cockpit-ai/context` | ContextManager, file discovery, tech stack analyzer, rule generator |
+| `@cockpit-ai/skills` | Skill loader, YAML → ResolvedSkill, SkillRegistry |
+| `@cockpit-ai/agents` | AgentSpawner, ClaudeRunner, WorktreeIntegration, state management |
+| `@cockpit-ai/worktree` | WorktreeManager (git worktree CRUD) |
+
+Build: `pnpm build` | Test: `pnpm test` | Dev: `pnpm dev`

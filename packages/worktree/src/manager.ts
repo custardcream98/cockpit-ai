@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { join, dirname } from "node:path";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -30,8 +30,11 @@ export class WorktreeManager {
   create(opts: Omit<CreateWorktreeOptions, "repo">): WorktreeInfo {
     const targetPath =
       opts.path ?? join(dirname(this.repoPath), opts.branch.replace(/\//g, "-"));
-    const flag = opts.createBranch !== false ? "-b" : "";
-    execSync(`git worktree add ${flag} ${opts.branch} ${targetPath}`, {
+    // 배열 방식으로 커맨드 인젝션 방지
+    const args = ["worktree", "add"];
+    if (opts.createBranch !== false) args.push("-b");
+    args.push(opts.branch, targetPath);
+    execFileSync("git", args, {
       cwd: this.repoPath,
       stdio: "pipe",
     });
@@ -43,7 +46,7 @@ export class WorktreeManager {
    * git worktree list --porcelain
    */
   list(): WorktreeInfo[] {
-    const output = execSync("git worktree list --porcelain", {
+    const output = execFileSync("git", ["worktree", "list", "--porcelain"], {
       cwd: this.repoPath,
       stdio: "pipe",
     }).toString("utf-8");
@@ -90,8 +93,9 @@ export class WorktreeManager {
    * git worktree remove <path> [--force]
    */
   remove(worktreePath: string, force?: boolean): void {
-    const forceFlag = force ? " --force" : "";
-    execSync(`git worktree remove ${worktreePath}${forceFlag}`, {
+    const args = ["worktree", "remove", worktreePath];
+    if (force) args.push("--force");
+    execFileSync("git", args, {
       cwd: this.repoPath,
       stdio: "pipe",
     });
@@ -102,7 +106,7 @@ export class WorktreeManager {
    * git worktree prune
    */
   prune(): void {
-    execSync("git worktree prune", {
+    execFileSync("git", ["worktree", "prune"], {
       cwd: this.repoPath,
       stdio: "pipe",
     });
