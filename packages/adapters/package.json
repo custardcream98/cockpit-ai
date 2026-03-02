@@ -1,6 +1,6 @@
 {
   "name": "@cockpit-ai/adapters",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cockpit AI tool adapters (Claude Code, Cursor, Copilot, etc.)",
   "type": "module",
   "engines": {
