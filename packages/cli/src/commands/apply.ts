@@ -92,6 +92,10 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
     ],
   };
 
+  // 어댑터 파일(CLAUDE.md, .claude/skills/)을 쓸 대상 디렉토리 결정
+  // projectRoot가 있으면 프로젝트 루트, 없으면 워크스페이스 루트 사용
+  const applyTarget = projectRoot ?? workspaceRoot ?? cwd;
+
   // ── Apply to each adapter ────────────────────────────────────────────────
 
   for (const adapter of adapters) {
@@ -99,19 +103,19 @@ export async function applyCommand(options: ApplyOptions): Promise<void> {
 
     try {
       if (options.clean) {
-        await adapter.clean(cwd);
+        await adapter.clean(applyTarget);
         spinner.info(`Cleaned ${adapter.name}`);
         continue;
       }
 
       // Apply context rules
       if (context.global.length > 0 || context.project.length > 0) {
-        await adapter.applyContext(cwd, context);
+        await adapter.applyContext(applyTarget, context);
       }
 
       // Apply each skill
       for (const skill of skills) {
-        await adapter.applySkill(cwd, skill);
+        await adapter.applySkill(applyTarget, skill);
       }
 
       const parts: string[] = [];
